@@ -615,6 +615,7 @@
       if(u){
         const name=u.displayName||u.email;
         document.getElementById('chatUserName').textContent=name;
+        sessionStorage.setItem('hub_chat_user', name);
         badge.style.display='flex'; row.style.display='flex'; empty.style.display='none';
         if(!msgsLoaded){ msgsLoaded=true;
           onChildAdded(ref(db,'messages'),snap=>{
