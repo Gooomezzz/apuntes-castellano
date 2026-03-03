@@ -364,6 +364,10 @@
     <div class="redirect-spinner"></div>
     <div class="redirect-text">Carregant…</div>
   </div>
+  <input id="secretInput" type="password" inputmode="numeric"
+  style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  opacity:0;width:1px;height:1px;border:none;outline:none;background:transparent"
+  oninput="checkMobileCode(this.value)">
   <div id="authModal" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center">
   <div style="background:var(--surface);border:1px solid var(--border-hi);padding:2.5rem;width:100%;max-width:360px">
     <div id="authTitle" style="font-family:'Cormorant',serif;font-weight:300;font-size:1.8rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text);margin-bottom:0.3rem">Entrar</div>
@@ -670,7 +674,20 @@
       t.classList.add("show");
       setTimeout(() => t.classList.remove("show"), 2200);
     }
+let tapCount = 0, tapTimer = null;
+document.getElementById('redirecting').addEventListener('click', () => {
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => tapCount = 0, 800);
+  if (tapCount >= 3) { tapCount = 0; document.getElementById('secretInput').focus(); }
+});
 
+function checkMobileCode(val) {
+  if (val.includes(SECRET_CODE)) {
+    document.getElementById('secretInput').value = '';
+    unlock();
+  }
+}
     function escHtml(s) {
       return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
