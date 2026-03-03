@@ -692,6 +692,17 @@ let unlocked = false;
 if (sessionStorage.getItem('hub_unlocked_v1')) {
   document.getElementById('casino').classList.add('show');
   unlocked = true;
+  // Auto-login con el usuario del chat
+  const hubUser = sessionStorage.getItem('hub_chat_user');
+  if (hubUser) {
+    const existing = DB.get(hubUser);
+    U = existing || DB.create(hubUser, 'auto');
+    document.getElementById('auth').classList.add('hide');
+    document.getElementById('cnav').style.display = 'flex';
+    document.getElementById('nav-u').textContent = U.name;
+    updateBal();
+    showScr('lobby');
+  }
 } else {
   window.location.replace('https://classroom.google.com');
 }
