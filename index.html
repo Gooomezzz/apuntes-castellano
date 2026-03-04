@@ -240,6 +240,8 @@
           <span style="font-family:'Syne Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-2);flex:1">Chat en vivo</span>
           <div id="chatUserBadge" style="display:none;font-family:'Syne Mono',monospace;font-size:0.62rem;color:var(--text-2);gap:0.5rem;align-items:center">
             Conectado: <strong id="chatUserName" style="color:var(--accent-2)"></strong>
+            <input id="avatarInput" type="file" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+            <div id="avatarPreview" onclick="document.getElementById('avatarInput').click()" style="width:28px;height:28px;border-radius:50%;background:var(--border-hi);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:var(--text-3);border:1px solid var(--border-hi)">+</div>
             <button onclick="fbLogout()" style="background:none;border:1px solid var(--border-hi);color:var(--text-3);font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.6rem;cursor:pointer">Salir</button>
           </div>
         </div>
@@ -252,6 +254,8 @@
             </div>
           </div>
           <div id="chatInputRow" style="display:none;border-top:1px solid var(--border);background:var(--surface);gap:0.75rem;padding:0.85rem 1.25rem;flex-shrink:0">
+            <input id="imgInput" type="file" accept="image/*" style="display:none" onchange="sendImg(this)">
+            <button onclick="document.getElementById('imgInput').click()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;padding:0.3rem 0.6rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">📷</button>
             <input id="chatInput" type="text" placeholder="Escribe un mensaje…" autocomplete="off" onkeydown="if(event.key==='Enter')sendMsg()" style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);padding:0.3rem 0;font-family:'Syne',sans-serif;font-size:0.83rem;color:var(--text);outline:none;width:100%">
             <button onclick="sendMsg()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.3rem 1rem;border:1px solid rgba(143,140,232,0.4);background:transparent;color:var(--accent);cursor:pointer;margin-top:0.5rem">Enviar</button>
           </div>
@@ -599,6 +603,49 @@ window.closeDM = () => { document.getElementById('dmModal').classList.remove('sh
   </script>
 
   <script type="module">
+    window.sendImg = async (input) => {
+      const file = input.files[0];
+      const u = auth.currentUser;
+      if (!file || !u) return;
+      const canvas = document.createElement('canvas');
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      await new Promise(r => img.onload = r);
+      const max = 400;
+      const ratio = Math.min(max/img.width, max/img.height);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      const base64 = canvas.toDataURL('image/jpeg', 0.7);
+      const name = u.displayName || u.email;
+      await push(ref(db,'messages'), {
+        text: '', img: base64, name, color: col(name),
+        avatar: u.photoURL||'', ts: Date.now()
+      });
+      input.value = '';
+    };
+    window.uploadAvatar = async (input) => {
+      const file = input.files[0];
+      if (!file || !auth.currentUser) return;
+      
+      // Comprimir y convertir a base64
+      const canvas = document.createElement('canvas');
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      await new Promise(r => img.onload = r);
+      canvas.width = 64; canvas.height = 64;
+      canvas.getContext('2d').drawImage(img, 0, 0, 64, 64);
+      const base64 = canvas.toDataURL('image/jpeg', 0.7);
+      
+      // Guardar en Firebase DB
+      await set(ref(db, 'avatars/' + auth.currentUser.uid), base64);
+      await updateProfile(auth.currentUser, { photoURL: base64 });
+      
+      const avatarEl = document.getElementById('avatarPreview');
+      avatarEl.innerHTML = `<img src="${base64}" style="width:100%;height:100%;object-fit:cover">`;
+      showToast('✓ Foto actualizada');
+    };
+    import { getStorage, ref as sref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getDatabase, ref, push, onChildAdded, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -606,6 +653,7 @@ window.closeDM = () => { document.getElementById('dmModal').classList.remove('sh
     const app  = initializeApp({ apiKey:"AIzaSyCvc6ukKAVhu_TCPGJ0sZuSDLweH4TNKIQ", authDomain:"chat-fde53.firebaseapp.com", databaseURL:"https://chat-fde53-default-rtdb.firebaseio.com", projectId:"chat-fde53", storageBucket:"chat-fde53.firebasestorage.app", messagingSenderId:"1094247573601", appId:"1:1094247573601:web:7f992b5fb299316c832220" });
     const auth = getAuth(app);
     const db   = getDatabase(app);
+    const storage = getStorage(app);
     const COLORS = ['#8f8ce8','#c9a84c','#4ade80','#e87070','#b8b5ff','#60a5fa'];
     const ADMIN_USER = 'Gooomezzz';
 let bannedUsers = new Set();
@@ -678,7 +726,7 @@ const dmObserver = new MutationObserver(() => {
       const time = new Date(d.ts).toLocaleTimeString('ca', {hour:'2-digit', minute:'2-digit'});
       const div = document.createElement('div');
       div.style.cssText = `display:flex;gap:0.6rem;align-items:flex-start;${isOwn?'flex-direction:row-reverse':''}`;
-      div.innerHTML = `<div style="width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace;background:${d.color}">${d.from.slice(0,2).toUpperCase()}</div><div style="display:flex;flex-direction:column;max-width:68%;${isOwn?'align-items:flex-end':''}"><div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${time}</div></div>`;
+      div.innerHTML = `<div style="width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace;background:${d.color}">${d.from.slice(0,2).toUpperCase()}</div><div style="display:flex;flex-direction:column;max-width:68%;${isOwn?'align-items:flex-end':''}"><div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img ? `<img src="${d.img}" style="max-width:200px;max-height:200px;border-radius:4px;display:block;margin-top:4px">` : d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${time}</div></div>`;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
     });
@@ -706,6 +754,12 @@ dmObserver.observe(document.getElementById('dmModal'), { attributes: true, attri
       const msgs=document.getElementById('chatMessages');
       if(u){
         const name=u.displayName||u.email;
+        const avatarEl = document.getElementById('avatarPreview');
+        if (u.photoURL) {
+          avatarEl.innerHTML = `<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover">`;
+        } else {
+          avatarEl.innerHTML = name.slice(0,2).toUpperCase();
+        }
         document.getElementById('chatUserName').textContent=name;
         sessionStorage.setItem('hub_chat_user', name);
         // Registrar usuario online
@@ -740,7 +794,7 @@ const isAdmin = d.name === ADMIN_USER;
 const showBan = name === ADMIN_USER && !isOwn;
 
 div.innerHTML = `
-  <div style="width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace;background:${d.color}">${d.name.slice(0,2).toUpperCase()}</div>
+  <div style="width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace;background:${d.color}">${d.avatar ? `<img src="${d.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:2px">` : d.name.slice(0,2).toUpperCase()}</div>
   <div style="display:flex;flex-direction:column;max-width:68%;${isOwn?'align-items:flex-end':''}">
     <div style="display:flex;align-items:center;gap:0.4rem;${isOwn?'flex-direction:row-reverse':''}">
       <span style="font-size:0.6rem;color:var(--text-2)">${d.name}</span>
