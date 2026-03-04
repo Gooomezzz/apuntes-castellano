@@ -492,7 +492,7 @@
 
     function renderHtmlGames() {
       const q = document.getElementById("searchHtml").value.toLowerCase();
-      const filtered = window._games.html.filter(g => g.name.toLowerCase().includes(q));
+       const filtered = window._games.html.filter(g => g.name.toLowerCase().includes(q));
       const container = document.getElementById("htmlList");
       if (filtered.length === 0) {
         container.innerHTML = `<div style="padding:3rem 0;text-align:center;color:var(--text-3);font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;">Ningún juego añadido todavía</div>`;
@@ -505,7 +505,7 @@
             ${g.key ? `<button onclick="event.stopPropagation();removeGame('html','${g.key}')" style="align-self:flex-end;font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;padding:0.25rem 0.6rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer;border-radius:2px">✕</button>` : ''}
           </div>`).join('')}</div>`;
       }
-      document.getElementById("countHtmlVisible").textContent = q ? `${filtered.length} / ${games.html.length}` : `${games.html.length} Juegos`;
+      document.getElementById("countHtmlVisible").textContent = q ? `${filtered.length} / ${window._games.html.length}` : `${window._games.html.length} Juegos`;
     }
 
     function renderLinks() {
@@ -519,7 +519,7 @@
           <div class="link-card-url">${escHtml(g.url)}</div>
           ${g.key ? `<button onclick="event.stopPropagation();removeGame('links','${g.key}')" style="align-self:flex-end;font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;padding:0.25rem 0.6rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer;border-radius:2px">✕</button>` : ''}
         </div>`).join('');
-      document.getElementById("countLinksVisible").textContent = q ? `${filtered.length} / ${games.links.length}` : `${games.links.length} links`;
+      document.getElementById("countLinksVisible").textContent = q ? `${filtered.length} / ${window._games.links.length}` : `${window._games.links.length} links`;
     }
 
     function launchGame(name, url) {
@@ -645,7 +645,20 @@
     document.getElementById('dmModal').addEventListener('click', function(e) {
       if (e.target === this) closeDM();
     });
-
+        function relativeTime(ts) {
+        const diff = Date.now() - ts;
+        const mins  = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        if (mins < 1)  return 'ahora mismo';
+        if (mins < 60) return `hace ${mins} min`;
+        if (hours < 8) return `hace ${hours}h`;
+        const d = new Date(ts);
+        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+        if (ts >= todayStart.getTime()) return d.toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+        const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate()-1);
+        if (ts >= yesterdayStart.getTime()) return 'ayer ' + d.toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+        return d.toLocaleDateString('es', {day:'numeric', month:'short'}) + ' ' + d.toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+        }
     function renderDMMessage(container, d, isOwn) {
       const div = document.createElement('div');
       div.setAttribute('data-ctx', '1');
