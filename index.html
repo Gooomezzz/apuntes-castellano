@@ -193,23 +193,24 @@
           <span class="hero-num" id="countLinks">0</span>
           <span class="hero-label">Links</span>
         </div>
-        <div class="dm-modal" id="dmModal">
-  <div class="dm-box">
-    <div class="dm-header">
-      <span class="dm-title" id="dmTitle">DM</span>
-      <button onclick="closeDM()" style="background:none;border:1px solid var(--border-hi);color:var(--text-3);font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.6rem;cursor:pointer">✕</button>
-    </div>
-    <div class="dm-messages" id="dmMessages"></div>
-    <div class="dm-input-row">
-      <input class="dm-input" id="dmInput" type="text" placeholder="Mensaje privado…" autocomplete="off" onkeydown="if(event.key==='Enter')sendDM()">
-      <button onclick="sendDM()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.3rem 1rem;border:1px solid rgba(143,140,232,0.4);background:transparent;color:var(--accent);cursor:pointer">Enviar</button>
-    </div>
-  </div>
-</div>
       </div>
       <div class="hint">↓ Scroll para ver los juegos</div>
     </section>
+    <div class="dm-modal" id="dmModal">
+      <div class="dm-box">
+        <div class="dm-header">
+          <span class="dm-title" id="dmTitle">DM</span>
+          <button onclick="closeDM()" style="background:none;border:1px solid var(--border-hi);color:var(--text-3);font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.6rem;cursor:pointer">✕</button>
+        </div>
+        <div class="dm-messages" id="dmMessages"></div>
+        <div class="dm-input-row">
+          <input class="dm-input" id="dmInput" type="text" placeholder="Mensaje privado…" autocomplete="off" onkeydown="if(event.key==='Enter')sendDM()">
+          <button onclick="sendDM()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.3rem 1rem;border:1px solid rgba(143,140,232,0.4);background:transparent;color:var(--accent);cursor:pointer">Enviar</button>
+        </div>
+      </div>
+    </div>
 
+    <div class="tabs-bar">
     <div class="tabs-bar">
       <button class="tab-btn active" onclick="switchTab('html')">Juegos HTML</button>
       <button class="tab-btn" onclick="switchTab('links')">Links externos</button>
