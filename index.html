@@ -214,6 +214,7 @@
       <button class="tab-btn active" onclick="switchTab('html')">Juegos HTML</button>
       <button class="tab-btn" onclick="switchTab('links')">Links externos</button>
       <button class="tab-btn" onclick="switchTab('chat')">Chat</button>
+      <button class="tab-btn" onclick="switchTab('dms')">DMs</button>
       <button class="tab-btn" onclick="switchTab('ia')">IA</button>
     </div>
 
@@ -278,8 +279,6 @@
     </div>
 
   </div>
-        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)">
-          <div style="width:5px;height:5px;border-radius:50%;background:#4ade80;box-shadow:0 0 5px #4ade80;animation:blink 2.2s ease infinite"></div>
           <span style="font-family:'Syne Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-2);flex:1">Chat en vivo</span>
           <div id="chatUserBadge" style="display:none;font-family:'Syne Mono',monospace;font-size:0.62rem;color:var(--text-2);gap:0.5rem;align-items:center">
             Conectado: <strong id="chatUserName" style="color:var(--accent-2)"></strong>
@@ -305,7 +304,28 @@
         </div>
       </div>
     </div>
+    <!-- DMs TAB -->
+    <div class="tab-panel" id="tab-dms">
+      <div style="display:flex;gap:0;border-top:1px solid var(--border);min-height:600px">
 
+        <!-- Sidebar usuarios -->
+        <div style="width:200px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column">
+          <div style="padding:0.75rem 1rem;font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Mensajes Directos</div>
+          <div id="dmUserList" style="flex:1;overflow-y:auto;padding:0.5rem 0"></div>
+        </div>
+
+        <!-- Conversación activa -->
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+          <div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-family:'Syne Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;color:var(--text-2)" id="dmPanelTitle">Selecciona un usuario</div>
+          <div id="dmPanelMessages" style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:0.6rem;height:460px"></div>
+          <div id="dmPanelInput" style="display:none;border-top:1px solid var(--border);background:var(--surface);gap:0.75rem;padding:0.85rem 1.25rem;flex-shrink:0">
+            <input id="dmPanelText" type="text" placeholder="Mensaje directo…" autocomplete="off" onkeydown="if(event.key==='Enter')sendDMPanel()" style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border-hi);padding:0.3rem 0;font-family:'Syne',sans-serif;font-size:0.83rem;color:var(--text);outline:none;width:100%">
+            <button onclick="sendDMPanel()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.3rem 1rem;border:1px solid rgba(143,140,232,0.4);background:transparent;color:var(--accent);cursor:pointer;margin-top:0.5rem">Enviar</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
     <!-- IA TAB -->
     <div class="tab-panel" id="tab-ia">
         <div id="aiKeySetup" style="padding:3rem 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1.5rem">
@@ -523,7 +543,7 @@
 
 
     function switchTab(t) {
-      document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['html','links','chat','ia'][i] === t));
+      document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['html','links','chat','dms','ia'][i] === t));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('tab-'+t).classList.add('active');
     }
@@ -648,7 +668,7 @@ window.closeDM = () => { document.getElementById('dmModal').classList.remove('sh
         const data = await res.json();
         const url = data.secure_url;
         const name = u.displayName || u.email;
-        await push(ref(db,'messages'), {
+        await push(ref(db, 'channelMessages/' + activeChannel), {
           text: '', img: url, name, color: col(name),
           avatar: u._avatar||'', ts: Date.now()
         });
@@ -687,15 +707,91 @@ window.closeDM = () => { document.getElementById('dmModal').classList.remove('sh
     });
     const COLORS = ['#8f8ce8','#c9a84c','#4ade80','#e87070','#b8b5ff','#60a5fa'];
     const ADMIN_USER = 'Gooomezzz';
-let bannedUsers = new Set();
-onValue(ref(db, 'bans'), snap => {
-  bannedUsers = new Set();
-  if (snap.val()) Object.keys(snap.val()).forEach(k => bannedUsers.add(snap.val()[k]));
-});
-window.banUser = async (name) => {
-  if (!confirm('¿Banear a ' + name + '?')) return;
-  await push(ref(db, 'bans'), name);
-};
+    let activeChannel = 'general';
+    let channelUnsubscribe = null;
+
+    function renderChannels(channels) {
+      const list = document.getElementById('channelList');
+      list.innerHTML = '';
+      channels.forEach(ch => {
+        const btn = document.createElement('div');
+        const isActive = ch.id === activeChannel;
+        btn.style.cssText = `display:flex;align-items:center;gap:0.5rem;padding:0.4rem 1rem;cursor:pointer;font-family:'Syne Mono',monospace;font-size:0.65rem;letter-spacing:0.06em;color:${isActive ? 'var(--text)' : 'var(--text-3)'};background:${isActive ? 'rgba(143,140,232,0.08)' : 'transparent'};border-left:2px solid ${isActive ? 'var(--accent)' : 'transparent'}`;
+        btn.innerHTML = `<span style="color:var(--text-3)">#</span> ${ch.name}`;
+        btn.onclick = () => switchChannel(ch.id, ch.name);
+        list.appendChild(btn);
+      });
+    }
+
+    function switchChannel(id, name) {
+      activeChannel = id;
+      document.getElementById('activeChannelName').textContent = name;
+      document.getElementById('chatMessages').innerHTML = '';
+      msgsLoaded = false;
+      loadChannelMessages(id);
+      renderChannels(currentChannels);
+    }
+
+    let currentChannels = [];
+
+    onValue(ref(db, 'channels'), snap => {
+      const data = snap.val();
+      if (data) {
+        currentChannels = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+      } else {
+        // Crear canal general por defecto
+        set(ref(db, 'channels/general'), { name: 'general', order: 0 });
+        currentChannels = [{ id: 'general', name: 'general', order: 0 }];
+      }
+      currentChannels.sort((a, b) => (a.order || 0) - (b.order || 0));
+      renderChannels(currentChannels);
+    });
+
+    window.promptAddChannel = () => {
+      const name = prompt('Nombre del canal:');
+      if (!name || !name.trim()) return;
+      const id = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const order = currentChannels.length;
+      set(ref(db, 'channels/' + id), { name: name.trim(), order });
+      showToast('✓ Canal #' + name.trim() + ' creado');
+    };
+    function loadChannelMessages(channelId) {
+      const msgs = document.getElementById('chatMessages');
+      const loggedName = sessionStorage.getItem('hub_chat_user');
+      if (!loggedName) return;
+      onChildAdded(ref(db, 'channelMessages/' + channelId), snap => {
+        const d = snap.val();
+        const isOwn = loggedName === d.name;
+        const time = new Date(d.ts).toLocaleTimeString('ca', {hour:'2-digit', minute:'2-digit'});
+        const div = document.createElement('div');
+        div.style.cssText = `display:flex;gap:0.6rem;align-items:flex-start;${isOwn?'flex-direction:row-reverse':''}`;
+        const isAdmin = d.name === ADMIN_USER;
+        const showBan = loggedName === ADMIN_USER && !isOwn;
+        div.innerHTML = `
+          <div style="width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace;background:${d.color}">${d.avatar ? `<img src="${d.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:2px">` : d.name.slice(0,2).toUpperCase()}</div>
+          <div style="display:flex;flex-direction:column;max-width:68%;${isOwn?'align-items:flex-end':''}">
+            <div style="display:flex;align-items:center;gap:0.4rem;${isOwn?'flex-direction:row-reverse':''}">
+              <span style="font-size:0.6rem;color:var(--text-2)">${d.name}</span>
+              ${isAdmin ? '<span style="font-size:0.5rem;background:var(--gold);color:#000;padding:1px 5px;border-radius:2px;font-weight:700">👑 ADMIN</span>' : ''}
+              ${showBan ? '<button onclick="banUser(\''+d.name+'\')" style="font-size:0.5rem;background:var(--red);color:#fff;border:none;padding:1px 5px;border-radius:2px;cursor:pointer">BAN</button>' : ''}
+              ${!isOwn ? '<button onclick="openDM(\''+d.name+'\')" style="font-size:0.5rem;background:rgba(143,140,232,0.2);color:var(--accent);border:none;padding:1px 5px;border-radius:2px;cursor:pointer">DM</button>' : ''}
+            </div>
+            <div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img ? `<img src="${d.img}" onclick="openImg(this.src)" style="max-width:200px;max-height:200px;border-radius:4px;display:block;cursor:zoom-in">` : d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+            <div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${d.name} · ${time}</div>
+          </div>`;
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+      });
+    }
+    let bannedUsers = new Set();
+    onValue(ref(db, 'bans'), snap => {
+      bannedUsers = new Set();
+      if (snap.val()) Object.keys(snap.val()).forEach(k => bannedUsers.add(snap.val()[k]));
+    });
+    window.banUser = async (name) => {
+      if (!confirm('¿Banear a ' + name + '?')) return;
+      await push(ref(db, 'bans'), name);
+    };
     const col = n => { let h=0; for(let c of n) h+=c.charCodeAt(0); return COLORS[h%COLORS.length]; };
     let authMode = 'login', msgsLoaded = false;
 
@@ -765,17 +861,16 @@ const dmObserver = new MutationObserver(() => {
 });
 dmObserver.observe(document.getElementById('dmModal'), { attributes: true, attributeFilter: ['class'] });
     window.sendMsg = async () => {
-      const input=document.getElementById('chatInput');
-      const text=input.value.trim();
-      const u=auth.currentUser;
-      if(!text||!u) return;
-      input.value='';
-      const name=u.displayName||u.email;
-      if (bannedUsers.has(name)) {
-  alert('Has sido baneado del chat.');
-  return;
-}
-      await push(ref(db,'messages'),{text, img:'', name, color:col(name), avatar:auth.currentUser._avatar||'', ts:Date.now()});
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      const u = auth.currentUser;
+      if (!text || !u) return;
+      input.value = '';
+      const name = u.displayName || u.email;
+      if (bannedUsers.has(name)) { alert('Has sido baneado del chat.'); return; }
+      await push(ref(db, 'channelMessages/' + activeChannel), {
+        text, img: '', name, color: col(name), avatar: u._avatar||'', ts: Date.now()
+      });
     };
     window.addGame = () => {
       const name = document.getElementById("addName").value.trim();
@@ -835,34 +930,71 @@ onValue(ref(db, 'online'), snap => {
   });
 });
         badge.style.display='flex'; row.style.display='flex'; empty.style.display='none';
-        if(!msgsLoaded){ msgsLoaded=true;
-          onChildAdded(ref(db,'messages'),snap=>{
-            const d=snap.val(); const isOwn=name===d.name;
-            const time=new Date(d.ts).toLocaleTimeString('ca',{hour:'2-digit',minute:'2-digit'});
-            const div=document.createElement('div');
-            div.style.cssText=`display:flex;gap:0.6rem;align-items:flex-start;${isOwn?'flex-direction:row-reverse':''}`;
-const isAdmin = d.name === ADMIN_USER;
-const showBan = name === ADMIN_USER && !isOwn;
-
-div.innerHTML = `
-  <div style="width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace;background:${d.color}">${d.avatar ? `<img src="${d.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:2px">` : d.name.slice(0,2).toUpperCase()}</div>
-  <div style="display:flex;flex-direction:column;max-width:68%;${isOwn?'align-items:flex-end':''}">
-    <div style="display:flex;align-items:center;gap:0.4rem;${isOwn?'flex-direction:row-reverse':''}">
-      <span style="font-size:0.6rem;color:var(--text-2)">${d.name}</span>
-      ${isAdmin ? '<span style="font-size:0.5rem;background:var(--gold);color:#000;padding:1px 5px;border-radius:2px;font-weight:700">👑 ADMIN</span>' : ''}
-      ${showBan ? '<button onclick="banUser(\''+d.name+'\')" style="font-size:0.5rem;background:var(--red);color:#fff;border:none;padding:1px 5px;border-radius:2px;cursor:pointer">BAN</button>' : ''}
-        ${!isOwn ? '<button onclick="openDM(\''+d.name+'\')" style="font-size:0.5rem;background:rgba(143,140,232,0.2);color:var(--accent);border:none;padding:1px 5px;border-radius:2px;cursor:pointer">DM</button>' : ''}
-      </div>
-    <div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img ? `<img src="${d.img}" onclick="openImg(this.src)" style="max-width:200px;max-height:200px;border-radius:4px;display:block;cursor:zoom-in">` : d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
-    <div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${d.name} · ${time}</div>
-  </div>`;
-            msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
-          });
-        }
-      } else { badge.style.display='none'; row.style.display='none'; empty.style.display='flex'; }
+        document.getElementById('btnAddChannel').style.display = name === ADMIN_USER ? 'block' : 'none';
+        loadChannelMessages(activeChannel);
+        loadDMUserList();
+        loadDMUserList();
+      } else { 
+        badge.style.display='none'; 
+        row.style.display='none'; 
+        empty.style.display='flex'; 
+      }
     });
 
     document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.getElementById('authModal').style.display='none'; });
+    let activeDMUser = null;
+
+    function loadDMUserList() {
+      const me = sessionStorage.getItem('hub_chat_user');
+      onValue(ref(db, 'users'), snap => {
+        const container = document.getElementById('dmUserList');
+        if (!container) return;
+        container.innerHTML = '';
+        if (!snap.val()) return;
+        Object.values(snap.val()).forEach(u => {
+          if (u.name === me) return;
+          const isActive = u.name === activeDMUser;
+          const btn = document.createElement('div');
+          btn.style.cssText = `display:flex;align-items:center;gap:0.6rem;padding:0.5rem 1rem;cursor:pointer;border-left:2px solid ${isActive ? 'var(--accent)' : 'transparent'};background:${isActive ? 'rgba(143,140,232,0.08)' : 'transparent'}`;
+          btn.innerHTML = `<div style="width:28px;height:28px;border-radius:50%;background:${col(u.name)};display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Syne Mono',monospace;flex-shrink:0">${u.name.slice(0,2).toUpperCase()}</div><span style="font-family:'Syne Mono',monospace;font-size:0.62rem;color:${isActive ? 'var(--text)' : 'var(--text-2)'};letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name}</span>`;
+          btn.onclick = () => openDMPanel(u.name);
+          container.appendChild(btn);
+        });
+      });
+    }
+
+    function openDMPanel(otherUser) {
+      const me = sessionStorage.getItem('hub_chat_user');
+      if (!me) return;
+      activeDMUser = otherUser;
+      document.getElementById('dmPanelTitle').textContent = '💬 ' + otherUser;
+      document.getElementById('dmPanelMessages').innerHTML = '';
+      document.getElementById('dmPanelInput').style.display = 'flex';
+      loadDMUserList();
+      const key = getDMKey(me, otherUser);
+      onChildAdded(ref(db, 'dms/' + key), snap => {
+        const d = snap.val();
+        const isOwn = d.from === me;
+        const time = new Date(d.ts).toLocaleTimeString('ca', {hour:'2-digit', minute:'2-digit'});
+        const div = document.createElement('div');
+        div.style.cssText = `display:flex;gap:0.6rem;align-items:flex-start;${isOwn?'flex-direction:row-reverse':''}`;
+        div.innerHTML = `<div style="width:24px;height:24px;border-radius:50%;background:${d.color};display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace">${d.from.slice(0,2).toUpperCase()}</div><div style="display:flex;flex-direction:column;max-width:68%;${isOwn?'align-items:flex-end':''}"><div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img ? `<img src="${d.img}" onclick="openImg(this.src)" style="max-width:200px;max-height:200px;border-radius:4px;display:block;cursor:zoom-in">` : d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${time}</div></div>`;
+        const msgs = document.getElementById('dmPanelMessages');
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+      });
+    }
+
+    window.sendDMPanel = async () => {
+      const input = document.getElementById('dmPanelText');
+      const text = input.value.trim();
+      const u = auth.currentUser;
+      if (!text || !u || !activeDMUser) return;
+      input.value = '';
+      const me = u.displayName || u.email;
+      const key = getDMKey(me, activeDMUser);
+      await push(ref(db, 'dms/' + key), { text, from: me, color: col(me), ts: Date.now() });
+    };
     window.openImg = (src) => {
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;cursor:zoom-out';
