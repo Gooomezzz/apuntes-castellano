@@ -593,21 +593,26 @@ window.closeDM = () => { document.getElementById('dmModal').classList.remove('sh
       const file = input.files[0];
       const u = auth.currentUser;
       if (!file || !u) return;
-      const canvas = document.createElement('canvas');
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      await new Promise(r => img.onload = r);
-      const max = 800;
-      const ratio = Math.min(max/img.width, max/img.height);
-      canvas.width = img.width * ratio;
-      canvas.height = img.height * ratio;
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      const base64 = canvas.toDataURL('image/jpeg', 1);
-      const name = u.displayName || u.email;
-      await push(ref(db,'messages'), {
-        text: '', img: base64, name, color: col(name),
-        avatar: u._avatar||'', ts: Date.now()
-      });
+      showToast('⏳ Subiendo imagen…');
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('upload_preset', 'hub_uploads');
+        fd.append('quality', '85');
+        const res = await fetch('https://api.cloudinary.com/v1_1/dvppe50ze/image/upload', {
+          method: 'POST', body: fd
+        });
+        const data = await res.json();
+        const url = data.secure_url;
+        const name = u.displayName || u.email;
+        await push(ref(db,'messages'), {
+          text: '', img: url, name, color: col(name),
+          avatar: u._avatar||'', ts: Date.now()
+        });
+        showToast('✓ Imagen enviada');
+      } catch(e) {
+        showToast('⚠ Error al subir imagen');
+      }
       input.value = '';
     };
     window.uploadAvatar = async (input) => {
