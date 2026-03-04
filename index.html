@@ -446,15 +446,13 @@
       if (filtered.length === 0) {
         container.innerHTML = `<div style="padding:3rem 0;text-align:center;color:var(--text-3);font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;">Ningun Juego HTML añadido todavia</div>`;
       } else {
-        container.innerHTML = filtered.map((g) => `
-          <div class="file-row" onclick="launchGame('${escHtml(g.name)}', '${escHtml(g.url)}')">
-            <div class="file-type-badge is-html">HTML</div>
-            <div class="file-name">${escHtml(g.name)}</div>
-            <div class="file-btns">
-              <button class="btn-file launch" onclick="event.stopPropagation();launchGame('${escHtml(g.name)}','${escHtml(g.url)}')">Launch</button>
-              <button class="btn-file" onclick="event.stopPropagation();removeGame('html','${g.key}')">✕</button>
-            </div>
-          </div>`).join('');
+      container.innerHTML = filtered.map((g) => `
+        <div class="link-card" onclick="launchGame('${escHtml(g.name)}','${escHtml(g.url)}')">
+          <div class="link-card-badge">URL</div>
+          <div class="link-card-name">${escHtml(g.name)}</div>
+          <div class="link-card-url">${escHtml(g.url)}</div>
+          <button onclick="event.stopPropagation();removeGame('links','${g.key}')" style="align-self:flex-end;font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;padding:0.25rem 0.6rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer;border-radius:2px">✕</button>
+        </div>`).join('');
       }
       document.getElementById("countHtmlVisible").textContent = q ? `${filtered.length} / ${games.html.length}` : `${games.html.length} Juegos`;
     }
@@ -599,12 +597,12 @@ window.closeDM = () => { document.getElementById('dmModal').classList.remove('sh
       const img = new Image();
       img.src = URL.createObjectURL(file);
       await new Promise(r => img.onload = r);
-      const max = 400;
+      const max = 800;
       const ratio = Math.min(max/img.width, max/img.height);
       canvas.width = img.width * ratio;
       canvas.height = img.height * ratio;
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      const base64 = canvas.toDataURL('image/jpeg', 0.7);
+      const base64 = canvas.toDataURL('image/jpeg', 1);
       const name = u.displayName || u.email;
       await push(ref(db,'messages'), {
         text: '', img: base64, name, color: col(name),
@@ -711,7 +709,7 @@ const dmObserver = new MutationObserver(() => {
       const time = new Date(d.ts).toLocaleTimeString('ca', {hour:'2-digit', minute:'2-digit'});
       const div = document.createElement('div');
       div.style.cssText = `display:flex;gap:0.6rem;align-items:flex-start;${isOwn?'flex-direction:row-reverse':''}`;
-      div.innerHTML = `<div style="width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace;background:${d.color}">${d.from.slice(0,2).toUpperCase()}</div><div style="display:flex;flex-direction:column;max-width:68%;${isOwn?'align-items:flex-end':''}"><div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img ? `<img src="${d.img}" style="max-width:200px;max-height:200px;border-radius:4px;display:block;margin-top:4px">` : d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${time}</div></div>`;
+      div.innerHTML = `<div style="width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace;background:${d.color}">${d.from.slice(0,2).toUpperCase()}</div><div style="display:flex;flex-direction:column;max-width:68%;${isOwn?'align-items:flex-end':''}"><div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img ? `<img src="${d.img}" onclick="openImg(this.src)" style="max-width:200px;max-height:200px;border-radius:4px;display:block;cursor:zoom-in">` : d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${time}</div></div>`;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
     });
@@ -807,7 +805,7 @@ div.innerHTML = `
       ${showBan ? '<button onclick="banUser(\''+d.name+'\')" style="font-size:0.5rem;background:var(--red);color:#fff;border:none;padding:1px 5px;border-radius:2px;cursor:pointer">BAN</button>' : ''}
         ${!isOwn ? '<button onclick="openDM(\''+d.name+'\')" style="font-size:0.5rem;background:rgba(143,140,232,0.2);color:var(--accent);border:none;padding:1px 5px;border-radius:2px;cursor:pointer">DM</button>' : ''}
       </div>
-    <div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img ? `<img src="${d.img}" style="max-width:200px;max-height:200px;border-radius:4px;display:block">` : d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+    <div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img ? `<img src="${d.img}" onclick="openImg(this.src)" style="max-width:200px;max-height:200px;border-radius:4px;display:block;cursor:zoom-in">` : d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
     <div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${d.name} · ${time}</div>
   </div>`;
             msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
@@ -817,6 +815,13 @@ div.innerHTML = `
     });
 
     document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.getElementById('authModal').style.display='none'; });
+    window.openImg = (src) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+      overlay.innerHTML = `<img src="${src}" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:4px">`;
+      overlay.onclick = () => overlay.remove();
+      document.body.appendChild(overlay);
+    };
   </script>
 </body>
 </html>
