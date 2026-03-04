@@ -181,10 +181,11 @@
 
     <div class="tabs-bar">
       <button class="tab-btn active" onclick="switchTab('html')">Juegos HTML</button>
-      <button class="tab-btn" onclick="switchTab('links')">Links externos</button>
+      <button class="tab-btn" onclick="switchTab('links')">Links</button>
       <button class="tab-btn" onclick="switchTab('chat')">Chat</button>
       <button class="tab-btn" onclick="switchTab('dms')">DMs</button>
       <button class="tab-btn" onclick="switchTab('ia')">IA</button>
+      <button class="tab-btn" onclick="switchTab('yt')">YouTube</button>
     </div>
 
     <!-- TAB: HTML GAMES -->
@@ -332,6 +333,27 @@
       </div>
     </div>
     <!-- FIN TAB IA -->
+
+
+    <!-- TAB: YOUTUBE -->
+    <div class="tab-panel" id="tab-yt">
+    <div class="ai-section">
+        <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;align-items:center">
+        <input id="ytSearch" type="text" placeholder="Buscar en YouTube…" autocomplete="off" 
+            onkeydown="if(event.key==='Enter')searchYT()"
+            style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.9rem;padding:0.4rem 0;outline:none">
+        <button onclick="searchYT()" style="font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem 1.25rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Buscar</button>
+        </div>
+        <div id="ytPlayer" style="display:none;margin-bottom:1.5rem">
+        <iframe id="ytFrame" width="100%" height="480" frameborder="0" allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            style="border:1px solid var(--border)"></iframe>
+        <button onclick="closeYT()" style="margin-top:0.5rem;font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.3rem 1rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">✕ Cerrar video</button>
+        </div>
+        <div id="ytResults" class="links-grid"></div>
+        <div id="ytEmpty" style="padding:3rem 0;text-align:center;color:var(--text-3);font-family:'Syne Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase">Busca algo para empezar</div>
+    </div>
+    </div>
 
     <!-- AÑADIR JUEGO — fuera de todos los tabs -->
     <div class="add-section">
@@ -533,7 +555,7 @@
     }
 
     function switchTab(t) {
-      const tabs = ['html','links','chat','dms','ia'];
+      const tabs = ['html','links','chat','dms','ia','yt'];
       document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i] === t));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('tab-'+t).classList.add('active');
@@ -836,6 +858,9 @@
         ? Object.entries(snap.val()).map(([k,v]) => ({...v, key:k}))
         : [];
       renderAll();
+    });
+    onValue(ref(db, 'yt_key'), snap => {
+    if (snap.val()) window._ytKey = snap.val();
     });
 
     // ── Timestamp relativo ──
@@ -1337,6 +1362,53 @@
         bar.style.display = 'block';
         bar.textContent = others[0].name + ' está escribiendo…';
       });
+    }
+    // ── YouTube ──
+    let YT_API_KEY = '';
+
+    // Leer key de Firebase (añadir esto también en el módulo Firebase)
+    // window._ytKey se setea desde el módulo
+
+    async function searchYT() {
+    const q = document.getElementById('ytSearch').value.trim();
+    if (!q) return;
+    const key = window._ytKey || YT_API_KEY;
+    if (!key) { showToast('⚠ No hay YouTube API key'); return; }
+
+    document.getElementById('ytResults').innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-3);font-family:\'Syne Mono\',monospace;font-size:0.7rem;letter-spacing:0.1em">Buscando…</div>';
+    document.getElementById('ytEmpty').style.display = 'none';
+
+    try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&maxResults=12&type=video&key=${key}`);
+        const data = await res.json();
+
+        if (!data.items?.length) {
+        document.getElementById('ytResults').innerHTML = '';
+        document.getElementById('ytEmpty').style.display = 'block';
+        document.getElementById('ytEmpty').textContent = 'Sin resultados';
+        return;
+        }
+
+        document.getElementById('ytResults').innerHTML = data.items.map(item => `
+        <div class="link-card" onclick="playYT('${item.id.videoId}','${escHtml(item.snippet.title)}')">
+            <img src="${item.snippet.thumbnails.medium.url}" style="width:100%;border-radius:2px;margin-bottom:0.25rem">
+            <div class="link-card-name" style="font-size:0.78rem;line-height:1.4">${escHtml(item.snippet.title)}</div>
+            <div class="link-card-url">${escHtml(item.snippet.channelTitle)}</div>
+        </div>`).join('');
+    } catch(e) {
+        showToast('⚠ Error al buscar');
+    }
+    }
+
+    function playYT(id, title) {
+    document.getElementById('ytFrame').src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+    document.getElementById('ytPlayer').style.display = 'block';
+    document.getElementById('ytPlayer').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeYT() {
+    document.getElementById('ytFrame').src = '';
+    document.getElementById('ytPlayer').style.display = 'none';
     }
   </script>
 </body>
