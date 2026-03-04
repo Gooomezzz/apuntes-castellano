@@ -603,6 +603,9 @@ window.closeDM = () => { document.getElementById('dmModal').classList.remove('sh
   </script>
 
   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, push, onChildAdded, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
     window.sendImg = async (input) => {
       const file = input.files[0];
       const u = auth.currentUser;
@@ -646,9 +649,7 @@ window.closeDM = () => { document.getElementById('dmModal').classList.remove('sh
       showToast('✓ Foto actualizada');
     };
     import { getStorage, ref as sref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getDatabase, ref, push, onChildAdded, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
 
     const app  = initializeApp({ apiKey:"AIzaSyCvc6ukKAVhu_TCPGJ0sZuSDLweH4TNKIQ", authDomain:"chat-fde53.firebaseapp.com", databaseURL:"https://chat-fde53-default-rtdb.firebaseio.com", projectId:"chat-fde53", storageBucket:"chat-fde53.firebasestorage.app", messagingSenderId:"1094247573601", appId:"1:1094247573601:web:7f992b5fb299316c832220" });
     const auth = getAuth(app);
@@ -744,7 +745,7 @@ dmObserver.observe(document.getElementById('dmModal'), { attributes: true, attri
   alert('Has sido baneado del chat.');
   return;
 }
-      await push(ref(db,'messages'),{text,name,color:col(name),ts:Date.now()});
+      await push(ref(db,'messages'),{text, img:'', name, color:col(name), avatar:auth.currentUser.photoURL||'', ts:Date.now()});
     };
 
     onAuthStateChanged(auth, u => {
@@ -802,7 +803,7 @@ div.innerHTML = `
       ${showBan ? '<button onclick="banUser(\''+d.name+'\')" style="font-size:0.5rem;background:var(--red);color:#fff;border:none;padding:1px 5px;border-radius:2px;cursor:pointer">BAN</button>' : ''}
         ${!isOwn ? '<button onclick="openDM(\''+d.name+'\')" style="font-size:0.5rem;background:rgba(143,140,232,0.2);color:var(--accent);border:none;padding:1px 5px;border-radius:2px;cursor:pointer">DM</button>' : ''}
       </div>
-    <div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+    <div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img ? `<img src="${d.img}" style="max-width:200px;max-height:200px;border-radius:4px;display:block">` : d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
     <div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${d.name} · ${time}</div>
   </div>`;
             msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
