@@ -229,12 +229,13 @@
               <button onclick="fbLogout()" style="background:none;border:1px solid var(--border-hi);color:var(--text-3);font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.6rem;cursor:pointer">Salir</button>
             </div>
           </div>
-          <div id="chatMessages" style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:0.6rem;height:460px">
+          <div id="chatMessages" style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:0.6rem;height:460px;max-height:460px;position:relative" onscroll="checkScrollBtn('chatMessages','chatScrollBtn')">
             <div id="chatEmpty" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;color:var(--text-3);font-family:'Syne Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase">
               <span>Inicia sesión para chatear</span>
               <button onclick="openAuth()" style="font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem 1.25rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Entrar / Registrarse</button>
             </div>
           </div>
+          <button id="chatScrollBtn" onclick="scrollToBottom('chatMessages')" style="display:none;position:absolute;bottom:1rem;right:1rem;z-index:10;background:var(--surface-2);border:1px solid var(--border-hi);color:var(--text-2);font-family:'Syne Mono',monospace;font-size:0.65rem;padding:0.4rem 0.75rem;cursor:pointer;border-radius:2px">↓ Bajar</button>
           <div id="chatTypingBar" style="display:none;padding:0.2rem 1.25rem;font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3);letter-spacing:0.06em;min-height:1.2rem;background:var(--surface)"></div>
           <div id="chatInputRow" style="display:none;border-top:1px solid var(--border);background:var(--surface);gap:0.75rem;padding:0.85rem 1.25rem;flex-shrink:0">
             <input id="imgInput" type="file" accept="image/*" style="display:none" onchange="sendImg(this)">
@@ -275,7 +276,8 @@
         <!-- Conversación activa -->
         <div style="flex:1;display:flex;flex-direction:column;min-width:0">
           <div id="dmPanelTitle" style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-family:'Syne Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;color:var(--text-2)">Selecciona un usuario</div>
-          <div id="dmPanelMessages" style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:0.6rem;height:460px"></div>
+          <div id="dmPanelMessages" style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:0.6rem;height:460px;max-height:460px;position:relative" onscroll="checkScrollBtn('dmPanelMessages','dmScrollBtn')"></div>
+          <button id="dmScrollBtn" onclick="scrollToBottom('dmPanelMessages')" style="display:none;position:absolute;bottom:1rem;right:1rem;z-index:10;background:var(--surface-2);border:1px solid var(--border-hi);color:var(--text-2);font-family:'Syne Mono',monospace;font-size:0.65rem;padding:0.4rem 0.75rem;cursor:pointer;border-radius:2px">↓ Bajar</button>
           <div id="dmTypingBar" style="display:none;padding:0.2rem 1.25rem;font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3);letter-spacing:0.06em;min-height:1.2rem;background:var(--surface)"></div>
           <div id="dmPanelInput" style="display:none;border-top:1px solid var(--border);background:var(--surface);gap:0.75rem;padding:0.85rem 1.25rem;flex-shrink:0">
             <input id="dmPanelText" type="text" placeholder="Mensaje directo…" autocomplete="off"
@@ -816,6 +818,17 @@
       overlay.onclick = () => overlay.remove();
       document.body.appendChild(overlay);
     };
+    function scrollToBottom(id) {
+      const el = document.getElementById(id);
+      el.scrollTop = el.scrollHeight;
+    }
+    function checkScrollBtn(containerId, btnId) {
+      const el = document.getElementById(containerId);
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+      btn.style.display = atBottom ? 'none' : 'block';
+    }
     // ── YouTube ──
         let YT_API_KEY = '';
 
@@ -1368,7 +1381,13 @@ window.closeYT = function() {
       updateDMsTabBadge();
 
       document.getElementById('dmPanelTitle').textContent = '💬 ' + otherUser;
-      document.getElementById('dmPanelMessages').innerHTML = '';
+      const dmContainer = document.getElementById('dmPanelMessages');
+      dmContainer.innerHTML = '';
+      // Si ya tiene listener, re-renderizar desde Firebase directamente
+      if (dmPanelListeners[key]) {
+        // Forzar re-carga limpiando el listener para este key
+        delete dmPanelListeners[key];
+      }
       document.getElementById('dmPanelInput').style.display = 'flex';
       renderDMUserList(document.getElementById('dmSearch')?.value?.toLowerCase().trim() || '');
 
@@ -1378,8 +1397,9 @@ window.closeYT = function() {
       if (!dmPanelListeners[key]) {
         dmPanelListeners[key] = true;
         onChildAdded(ref(db, 'dms/' + key), snap => {
+          const d = snap.val();
+          // Siempre renderizar si este es el panel activo
           if (activeDMUser === otherUser) {
-            const d = snap.val();
             renderDMMessage(document.getElementById('dmPanelMessages'), d, d.from === me);
             dmLastSeen[key] = Date.now();
             saveDmLastSeen();
