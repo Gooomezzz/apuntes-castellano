@@ -717,8 +717,8 @@
 
     function showCtxMenu(e, userName, msgEl, msgKey) {
       const me = sessionStorage.getItem('hub_chat_user');
-      if (me !== 'Gooomezzz') return; // solo admin
-      if (userName === 'Gooomezzz') return; // no sobre sí mismo
+      if (me !== 'Admin') return; // solo admin
+      if (userName === 'Admin') return; // no sobre sí mismo
       e.preventDefault();
       e.stopPropagation();
       ctxTarget = { user: userName, msgEl, msgKey };
@@ -906,7 +906,7 @@ window.closeYT = function() {
     window._fbFns  = { ref, push, onChildAdded, set, onValue, remove };
 
     const COLORS = ['#8f8ce8','#c9a84c','#4ade80','#e87070','#b8b5ff','#60a5fa'];
-    const ADMIN_USER = 'Gooomezzz';
+    const ADMIN_USER = 'Admin';
     const col = n => { let h=0; for(let c of n) h+=c.charCodeAt(0); return COLORS[h%COLORS.length]; };
 
     let activeChannel = 'general';
