@@ -240,6 +240,7 @@
           <div id="chatInputRow" style="display:none;border-top:1px solid var(--border);background:var(--surface);gap:0.75rem;padding:0.85rem 1.25rem;flex-shrink:0">
             <input id="imgInput" type="file" accept="image/*" style="display:none" onchange="sendImg(this)">
             <button onclick="document.getElementById('imgInput').click()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;padding:0.3rem 0.6rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">📷</button>
+            <button onclick="openPollModal()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;padding:0.3rem 0.6rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">📊</button>
             <input id="chatInput" type="text" placeholder="Escribe un mensaje…" autocomplete="off"
               onkeydown="if(event.key==='Enter')sendMsg()"
               oninput="onChatTyping()"
@@ -409,6 +410,54 @@
 
   <!-- ═══════════════════════════════════════════════════════ SCRIPTS ═══ -->
   <script>
+    // ── Encuestas ──
+    window.openPollModal = () => {
+      document.getElementById('pollModal').style.display = 'flex';
+    };
+    window.closePollModal = () => {
+      document.getElementById('pollModal').style.display = 'none';
+      document.getElementById('pollQuestion').value = '';
+      // Reset opciones
+      const opts = document.getElementById('pollOptions');
+      opts.innerHTML = '';
+      addPollOption('Sí'); addPollOption('No');
+    };
+
+    let pollOptCount = 2;
+    window.addPollOption = (val = '') => {
+      pollOptCount++;
+      const opts = document.getElementById('pollOptions');
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;flex-direction:column;gap:0.4rem';
+      div.innerHTML = `
+        <span style="font-family:'Syne Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3)">Opción ${pollOptCount}</span>
+        <input type="text" value="${val}" placeholder="Opción..." class="poll-opt-input" style="background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.85rem;padding:0.35rem 0;outline:none;width:100%">
+      `;
+      opts.appendChild(div);
+    };
+
+    window.submitPoll = async () => {
+      const question = document.getElementById('pollQuestion').value.trim();
+      const optInputs = document.querySelectorAll('.poll-opt-input');
+      const options = [...optInputs].map(i => i.value.trim()).filter(Boolean);
+      if (!question || options.length < 2) { showToast('⚠ Rellena la pregunta y al menos 2 opciones'); return; }
+      const u = window._fbAuth?.currentUser;
+      if (!u) { showToast('⚠ Inicia sesión primero'); return; }
+      const name = u.displayName || u.email;
+      const poll = {
+        type: 'poll',
+        question,
+        options,
+        votes: {},
+        name,
+        color: (() => { const C=['#8f8ce8','#c9a84c','#4ade80','#e87070','#b8b5ff','#60a5fa']; let h=0; for(let c of name) h+=c.charCodeAt(0); return C[h%C.length]; })(),
+        ts: Date.now()
+      };
+      const { ref, push } = window._fbFns;
+      await push(ref(window._fbDb, 'channelMessages/' + (window._activeChannel || 'general')), poll);
+      closePollModal();
+      showToast('✓ Encuesta publicada');
+    };
     // ── Groq key ──
     window.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem('groq_key')) {
@@ -513,8 +562,16 @@
 
     function renderHtmlGames() {
       const q = document.getElementById("searchHtml").value.toLowerCase();
-       const filtered = window._games.html.filter(g => g.name.toLowerCase().includes(q));
+      const filtered = window._games.html.filter(g => g.name.toLowerCase().includes(q));
       const container = document.getElementById("htmlList");
+      const loggedIn = sessionStorage.getItem('hub_chat_user');
+      if (!loggedIn) {
+        container.innerHTML = `<div style="padding:3rem 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1rem;color:var(--text-3);font-family:'Syne Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase">
+          <span>Inicia sesión para ver los juegos</span>
+          <button onclick="openAuth()" style="font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem 1.25rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Entrar / Registrarse</button>
+        </div>`;
+        return;
+      }
       if (filtered.length === 0) {
         container.innerHTML = `<div style="padding:3rem 0;text-align:center;color:var(--text-3);font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;">Ningún juego añadido todavía</div>`;
       } else {
@@ -979,8 +1036,73 @@ window.closeYT = function() {
         list.appendChild(btn);
       });
     }
+    // Leer y registrar enquestas
+    function renderPoll(d, pollId, channelId, myName) {
+      const div = document.createElement('div');
+      div.id = 'poll-' + pollId;
+      div.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;padding:0.75rem 1rem;background:var(--surface-2);border:1px solid var(--border-hi);max-width:400px;border-radius:2px';
+      
+      const totalVotes = d.votes ? Object.keys(d.votes).length : 0;
+      const myVote = d.votes?.[myName];
+
+      div.innerHTML = `
+        <div style="font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--text-3);letter-spacing:0.08em">📊 ${d.name} · encuesta</div>
+        <div style="font-size:0.9rem;font-weight:600;color:var(--text)">${d.question}</div>
+        <div id="poll-opts-${pollId}" style="display:flex;flex-direction:column;gap:0.4rem"></div>
+        <div style="font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3)">${totalVotes} voto${totalVotes!==1?'s':''}</div>
+      `;
+
+      const optsContainer = div.querySelector('#poll-opts-' + pollId);
+      d.options.forEach((opt, i) => {
+        const optVotes = d.votes ? Object.values(d.votes).filter(v => v === i).length : 0;
+        const pct = totalVotes > 0 ? Math.round((optVotes / totalVotes) * 100) : 0;
+        const isMyVote = myVote === i;
+
+        const optDiv = document.createElement('div');
+        optDiv.style.cssText = 'cursor:pointer;position:relative;overflow:hidden;border:1px solid ' + (isMyVote ? 'var(--accent)' : 'var(--border-hi)');
+        optDiv.innerHTML = `
+          <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${isMyVote?'rgba(143,140,232,0.25)':'rgba(255,255,255,0.05)'};transition:width 0.3s"></div>
+          <div style="position:relative;display:flex;justify-content:space-between;padding:0.4rem 0.75rem;font-size:0.8rem;color:${isMyVote?'var(--accent)':'var(--text)'}">
+            <span>${opt}</span>
+            <span style="font-family:'Syne Mono',monospace;font-size:0.7rem;opacity:0.7">${pct}%</span>
+          </div>
+        `;
+        optDiv.onclick = () => votePoll(pollId, channelId, i, myName);
+        optsContainer.appendChild(optDiv);
+      });
+
+      // Escuchar cambios en votos en tiempo real
+      onValue(ref(db, 'channelMessages/' + channelId + '/' + pollId + '/votes'), snap => {
+        const votes = snap.val() || {};
+        const newTotal = Object.keys(votes).length;
+        const newMyVote = votes[myName];
+        d.votes = votes;
+
+        d.options.forEach((opt, i) => {
+          const optVotes = Object.values(votes).filter(v => v === i).length;
+          const pct = newTotal > 0 ? Math.round((optVotes / newTotal) * 100) : 0;
+          const isVoted = newMyVote === i;
+          const optEl = optsContainer.children[i];
+          if (!optEl) return;
+          optEl.style.border = '1px solid ' + (isVoted ? 'var(--accent)' : 'var(--border-hi)');
+          optEl.querySelector('div').style.width = pct + '%';
+          optEl.querySelector('div').style.background = isVoted ? 'rgba(143,140,232,0.25)' : 'rgba(255,255,255,0.05)';
+          optEl.querySelectorAll('div > span')[0].style.color = isVoted ? 'var(--accent)' : 'var(--text)';
+          optEl.querySelectorAll('div > span')[1].textContent = pct + '%';
+        });
+        div.querySelector('div:last-child').textContent = newTotal + ' voto' + (newTotal!==1?'s':'');
+      });
+
+      return div;
+    }
+
+    async function votePoll(pollId, channelId, optionIndex, myName) {
+      const { ref, set } = window._fbFns;
+      await set(ref(db, 'channelMessages/' + channelId + '/' + pollId + '/votes/' + myName), optionIndex);
+    }
 
     function switchChannel(id, chName) {
+      window._activeChannel = id;
       activeChannel = id;
       document.getElementById('activeChannelName').textContent = chName;
       const msgs = document.getElementById('chatMessages');
@@ -1024,6 +1146,16 @@ window.closeYT = function() {
       onChildAdded(ref(db, 'channelMessages/' + channelId), snap => {
         const msgKey = 'channelMessages/' + channelId + '/' + snap.key;
         const d = snap.val();
+        if (d.type === 'poll') {
+            const div = renderPoll(d, snap.key, channelId, loggedName);
+            if (!channelCache[channelId]) channelCache[channelId] = [];
+            channelCache[channelId].push(div);
+            if (activeChannel === channelId) {
+              document.getElementById('chatMessages').appendChild(div);
+              document.getElementById('chatMessages').scrollTop = 999999;
+            }
+          return;
+        }
         const isOwn = loggedName === d.name;
         const isMention = d.text && d.text.toLowerCase().includes('@' + loggedName.toLowerCase());
         const isAdmin = d.name === ADMIN_USER;
@@ -1207,6 +1339,7 @@ window.closeYT = function() {
         badge.style.display = 'flex';
         row.style.display   = 'flex';
         empty.style.display = 'none';
+        renderAll();
         document.getElementById('btnAddChannel').style.display = name === ADMIN_USER ? 'block' : 'none';
         // FIX: pasar por switchChannel para respetar channelListeners y no duplicar
         if (!channelListeners[activeChannel]) switchChannel(activeChannel, document.getElementById('activeChannelName').textContent);
@@ -1391,11 +1524,15 @@ window.closeYT = function() {
         dmPanelListeners[key] = true;
         onChildAdded(ref(db, 'dms/' + key), snap => {
           const d = snap.val();
-          // Siempre renderizar si este es el panel activo
           if (activeDMUser === otherUser) {
             renderDMMessage(document.getElementById('dmPanelMessages'), d, d.from === me);
+            // ← AÑADE ESTO: actualizar lastSeen cada vez que llega un mensaje y la conv está abierta
             dmLastSeen[key] = Date.now();
             saveDmLastSeen();
+            // Limpiar el badge si había mensajes sin leer
+            delete dmUnread[otherUser];
+            updateDMsTabBadge();
+            renderDMUserList(document.getElementById('dmSearch')?.value?.toLowerCase().trim() || '');
           }
         });
       }
@@ -1440,5 +1577,30 @@ window.closeYT = function() {
     }
     
   </script>
+  <!-- POLL MODAL -->
+  <div id="pollModal" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center">
+    <div style="background:var(--surface);border:1px solid var(--border-hi);padding:2rem;width:100%;max-width:420px;display:flex;flex-direction:column;gap:1rem">
+      <div style="font-family:'Cormorant',serif;font-weight:300;font-size:1.5rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text)">Nueva Encuesta</div>
+      <div style="display:flex;flex-direction:column;gap:0.4rem">
+        <span style="font-family:'Syne Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3)">Pregunta</span>
+        <input id="pollQuestion" type="text" placeholder="¿Cuál es tu color favorito?" style="background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.9rem;padding:0.4rem 0;outline:none;width:100%">
+      </div>
+      <div id="pollOptions" style="display:flex;flex-direction:column;gap:0.5rem">
+        <div style="display:flex;flex-direction:column;gap:0.4rem">
+          <span style="font-family:'Syne Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3)">Opción 1</span>
+          <input type="text" placeholder="Rojo" class="poll-opt-input" style="background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.85rem;padding:0.35rem 0;outline:none;width:100%">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem">
+          <span style="font-family:'Syne Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3)">Opción 2</span>
+          <input type="text" placeholder="Azul" class="poll-opt-input" style="background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.85rem;padding:0.35rem 0;outline:none;width:100%">
+        </div>
+      </div>
+      <button onclick="addPollOption()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.3rem 1rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer;align-self:flex-start">+ Añadir opción</button>
+      <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+        <button onclick="closePollModal()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">Cancelar</button>
+        <button onclick="submitPoll()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Publicar</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
