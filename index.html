@@ -1084,13 +1084,22 @@ window.closeYT = function() {
           const isVoted = newMyVote === i;
           const optEl = optsContainer.children[i];
           if (!optEl) return;
+          
+          const bar  = optEl.querySelector('div:first-child');
+          const text = optEl.querySelector('div:last-child');
+          const spans = text ? text.querySelectorAll('span') : [];
+          
+          if (!bar || !text || spans.length < 2) return; // ← guard contra null
+          
           optEl.style.border = '1px solid ' + (isVoted ? 'var(--accent)' : 'var(--border-hi)');
-          optEl.querySelector('div').style.width = pct + '%';
-          optEl.querySelector('div').style.background = isVoted ? 'rgba(143,140,232,0.25)' : 'rgba(255,255,255,0.05)';
-          optEl.querySelectorAll('div > span')[0].style.color = isVoted ? 'var(--accent)' : 'var(--text)';
-          optEl.querySelectorAll('div > span')[1].textContent = pct + '%';
+          bar.style.width = pct + '%';
+          bar.style.background = isVoted ? 'rgba(143,140,232,0.25)' : 'rgba(255,255,255,0.05)';
+          spans[0].style.color = isVoted ? 'var(--accent)' : 'var(--text)';
+          spans[1].textContent = pct + '%';
         });
-        div.querySelector('div:last-child').textContent = newTotal + ' voto' + (newTotal!==1?'s':'');
+        
+        const totalEl = div.querySelector('div:last-child');
+        if (totalEl) totalEl.textContent = newTotal + ' voto' + (newTotal !== 1 ? 's' : '');
       });
 
       return div;
