@@ -1059,10 +1059,10 @@ window.closeYT = function() {
         const isMyVote = myVote === i;
 
         const optDiv = document.createElement('div');
-        optDiv.style.cssText = 'cursor:pointer;position:relative;overflow:hidden;border:1px solid ' + (isMyVote ? 'var(--accent)' : 'var(--border-hi)');
+        optDiv.style.cssText = 'cursor:pointer;position:relative;overflow:hidden;min-height:32px;border:1px solid ' + (isMyVote ? 'var(--accent)' : 'var(--border-hi)');
         optDiv.innerHTML = `
           <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${isMyVote?'rgba(143,140,232,0.25)':'rgba(255,255,255,0.05)'};transition:width 0.3s"></div>
-          <div style="position:relative;display:flex;justify-content:space-between;padding:0.4rem 0.75rem;font-size:0.8rem;color:${isMyVote?'var(--accent)':'var(--text)'}">
+          <div style="position:relative;display:flex;justify-content:space-between;padding:0.4rem 0.75rem;min-height:32px;align-items:center;font-size:0.8rem;color:${isMyVote?'var(--accent)':'var(--text)'}">
             <span>${opt}</span>
             <span style="font-family:'Syne Mono',monospace;font-size:0.7rem;opacity:0.7">${pct}%</span>
           </div>
