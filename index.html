@@ -1041,56 +1041,76 @@ window.closeYT = function() {
       const div = document.createElement('div');
       div.id = 'poll-' + pollId;
       div.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;padding:0.75rem 1rem;background:var(--surface-2);border:1px solid var(--border-hi);max-width:400px;border-radius:2px';
-      
+
+      const header = document.createElement('div');
+      header.style.cssText = "font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--text-3);letter-spacing:0.08em";
+      header.textContent = '📊 ' + d.name + ' · encuesta';
+      div.appendChild(header);
+
+      const question = document.createElement('div');
+      question.style.cssText = 'font-size:0.9rem;font-weight:600;color:var(--text)';
+      question.textContent = d.question;
+      div.appendChild(question);
+
+      const optsContainer = document.createElement('div');
+      optsContainer.id = 'poll-opts-' + pollId;
+      optsContainer.style.cssText = 'display:flex;flex-direction:column;gap:0.4rem';
+      div.appendChild(optsContainer);
+
+      const totalEl = document.createElement('div');
+      totalEl.style.cssText = "font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3)";
       const totalVotes = d.votes ? Object.keys(d.votes).length : 0;
-      const myVote = d.votes?.[myName];
+      totalEl.textContent = totalVotes + ' voto' + (totalVotes !== 1 ? 's' : '');
+      div.appendChild(totalEl);
 
-      div.innerHTML = `
-        <div style="font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--text-3);letter-spacing:0.08em">📊 ${d.name} · encuesta</div>
-        <div style="font-size:0.9rem;font-weight:600;color:var(--text)">${d.question}</div>
-        <div id="poll-opts-${pollId}" style="display:flex;flex-direction:column;gap:0.4rem"></div>
-        <div style="font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3)">${totalVotes} voto${totalVotes!==1?'s':''}</div>
-      `;
+      const myVote = d.votes ? d.votes[myName] : undefined;
 
-      const optsContainer = div.querySelector('#poll-opts-' + pollId);
       d.options.forEach((opt, i) => {
-        const optVotes = d.votes ? Object.values(d.votes).filter(v => v === i).length : 0;
+        const optVotes = d.votes ? Object.values(d.votes).filter(v => Number(v) === i).length : 0;
         const pct = totalVotes > 0 ? Math.round((optVotes / totalVotes) * 100) : 0;
-        const isMyVote = myVote === i;
+        const isMyVote = myVote !== undefined && Number(myVote) === i;
 
         const optDiv = document.createElement('div');
-        optDiv.style.cssText = 'cursor:pointer;position:relative;overflow:hidden;min-height:32px;border:1px solid ' + (isMyVote ? 'var(--accent)' : 'var(--border-hi)');
-        optDiv.innerHTML = `
-          <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${isMyVote?'rgba(143,140,232,0.25)':'rgba(255,255,255,0.05)'};transition:width 0.3s"></div>
-          <div style="position:relative;display:flex;justify-content:space-between;padding:0.4rem 0.75rem;min-height:32px;align-items:center;font-size:0.8rem;color:${isMyVote?'var(--accent)':'var(--text)'}">
-            <span>${opt}</span>
-            <span style="font-family:'Syne Mono',monospace;font-size:0.7rem;opacity:0.7">${pct}%</span>
-          </div>
-        `;
+        optDiv.style.cssText = 'cursor:pointer;position:relative;overflow:hidden;border:1px solid ' + (isMyVote ? 'var(--accent)' : 'var(--border-hi)');
+
+        const bar = document.createElement('div');
+        bar.style.cssText = 'position:absolute;left:0;top:0;height:100%;width:' + pct + '%;background:' + (isMyVote ? 'rgba(143,140,232,0.25)' : 'rgba(255,255,255,0.05)') + ';transition:width 0.3s';
+
+        const label = document.createElement('div');
+        label.style.cssText = 'position:relative;display:flex;justify-content:space-between;padding:0.4rem 0.75rem;font-size:0.8rem;color:' + (isMyVote ? 'var(--accent)' : 'var(--text)');
+
+        const spanText = document.createElement('span');
+        spanText.textContent = opt;
+        const spanPct = document.createElement('span');
+        spanPct.style.cssText = "font-family:'Syne Mono',monospace;font-size:0.7rem;opacity:0.7";
+        spanPct.textContent = pct + '%';
+
+        label.appendChild(spanText);
+        label.appendChild(spanPct);
+        optDiv.appendChild(bar);
+        optDiv.appendChild(label);
         optDiv.onclick = () => votePoll(pollId, channelId, i, myName);
         optsContainer.appendChild(optDiv);
       });
 
-      // Escuchar cambios en votos en tiempo real
       onValue(ref(db, 'channelMessages/' + channelId + '/' + pollId + '/votes'), snap => {
         const votes = snap.val() || {};
         const newTotal = Object.keys(votes).length;
         const newMyVote = votes[myName];
-        d.votes = votes;
 
         d.options.forEach((opt, i) => {
-          const optVotes = Object.values(votes).filter(v => v === i).length;
+          const optVotes = Object.values(votes).filter(v => Number(v) === i).length;
           const pct = newTotal > 0 ? Math.round((optVotes / newTotal) * 100) : 0;
-          const isVoted = newMyVote === i;
+          const isVoted = newMyVote !== undefined && Number(newMyVote) === i;
           const optEl = optsContainer.children[i];
           if (!optEl) return;
-          
+
           const bar  = optEl.children[0];
           const text = optEl.children[1];
           if (!bar || !text) return;
           const spans = text.querySelectorAll('span');
           if (spans.length < 2) return;
-          
+
           optEl.style.border = '1px solid ' + (isVoted ? 'var(--accent)' : 'var(--border-hi)');
           bar.style.width = pct + '%';
           bar.style.background = isVoted ? 'rgba(143,140,232,0.25)' : 'rgba(255,255,255,0.05)';
@@ -1098,9 +1118,9 @@ window.closeYT = function() {
           spans[1].textContent = pct + '%';
         });
 
-        const totalEl = div.querySelector('div:last-child');
-        if (totalEl) totalEl.textContent = newTotal + ' voto' + (newTotal !== 1 ? 's' : '');
+        totalEl.textContent = newTotal + ' voto' + (newTotal !== 1 ? 's' : '');
       });
+
       return div;
     }
 
