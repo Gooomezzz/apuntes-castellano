@@ -774,8 +774,8 @@
 
     function showCtxMenu(e, userName, msgEl, msgKey) {
       const me = sessionStorage.getItem('hub_chat_user');
-      if (me !== 'Admin') return; // solo admin
-      if (userName === 'Admin') return; // no sobre sí mismo
+      if (me !== 'Gooomezzz') return; // solo admin
+      if (userName === 'Gooomezzz') return; // no sobre sí mismo
       e.preventDefault();
       e.stopPropagation();
       ctxTarget = { user: userName, msgEl, msgKey };
@@ -963,7 +963,7 @@ window.closeYT = function() {
     window._fbFns  = { ref, push, onChildAdded, set, onValue, remove };
 
     const COLORS = ['#8f8ce8','#c9a84c','#4ade80','#e87070','#b8b5ff','#60a5fa'];
-    const ADMIN_USER = 'Admin';
+    const ADMIN_USER = 'Gooomezzz';
     const col = n => { let h=0; for(let c of n) h+=c.charCodeAt(0); return COLORS[h%COLORS.length]; };
 
     let activeChannel = 'general';
@@ -1085,11 +1085,11 @@ window.closeYT = function() {
           const optEl = optsContainer.children[i];
           if (!optEl) return;
           
-          const bar  = optEl.querySelector('div:first-child');
-          const text = optEl.querySelector('div:last-child');
-          const spans = text ? text.querySelectorAll('span') : [];
-          
-          if (!bar || !text || spans.length < 2) return; // ← guard contra null
+          const bar  = optEl.children[0];
+          const text = optEl.children[1];
+          if (!bar || !text) return;
+          const spans = text.querySelectorAll('span');
+          if (spans.length < 2) return;
           
           optEl.style.border = '1px solid ' + (isVoted ? 'var(--accent)' : 'var(--border-hi)');
           bar.style.width = pct + '%';
@@ -1097,11 +1097,10 @@ window.closeYT = function() {
           spans[0].style.color = isVoted ? 'var(--accent)' : 'var(--text)';
           spans[1].textContent = pct + '%';
         });
-        
+
         const totalEl = div.querySelector('div:last-child');
         if (totalEl) totalEl.textContent = newTotal + ' voto' + (newTotal !== 1 ? 's' : '');
       });
-
       return div;
     }
 
