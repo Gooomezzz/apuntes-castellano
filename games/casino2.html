@@ -357,12 +357,14 @@ body{font-family:'Lato',sans-serif;background:#0a0a0f;color:#fff}
 }
 
 /* Estados de la palanca */
-.slot-lever-wrap.pulling .lever-base{
-  transform:rotate(35deg);
+.slot-lever-wrap.pulling .lever-base,
+.slot-lever-wrap.pulling .lever-ball{
+  transform:translateY(48px);
   transition:transform .25s cubic-bezier(.25,.46,.45,.94);
 }
-.slot-lever-wrap.resetting .lever-base{
-  transform:rotate(0deg);
+.slot-lever-wrap.resetting .lever-base,
+.slot-lever-wrap.resetting .lever-ball{
+  transform:translateY(0px);
   transition:transform .5s cubic-bezier(.34,1.56,.64,1);
 }
 
@@ -720,7 +722,7 @@ body{font-family:'Lato',sans-serif;background:#0a0a0f;color:#fff}
           </div>
 
           <!-- PALANCA -->
-          <div class="slot-lever-wrap" id="lever" onclick="leverPull()">
+          <div class="slot-lever-wrap" id="lever">
             <div class="lever-ball" id="lever-ball"></div>
             <div class="lever-base" id="lever-base"></div>
             <div class="lever-label">PULL<br>TO SPIN</div>
@@ -1199,16 +1201,69 @@ function leverPull() {
   slSpin();
 }
 
-function animateLever() {
-  const lever = document.getElementById('lever');
+function animateLever(){
+  const lever=document.getElementById('lever');
   lever.classList.remove('resetting');
   lever.classList.add('pulling');
-  setTimeout(() => {
+  setTimeout(()=>{
     lever.classList.remove('pulling');
     lever.classList.add('resetting');
-    setTimeout(() => lever.classList.remove('resetting'), 600);
-  }, 300);
+    setTimeout(()=>lever.classList.remove('resetting'),600);
+  },300);
 }
+
+// DRAG vertical en la palanca
+(function(){
+  const lever=document.getElementById('lever');
+  const ball=document.getElementById('lever-ball');
+  const base=document.getElementById('lever-base');
+  const PULL_DIST=48;
+  let dragging=false, startY=0, currentY=0;
+
+  function onStart(e){
+    if(slSpinning)return;
+    dragging=true;
+    startY=e.touches?e.touches[0].clientY:e.clientY;
+    currentY=0;
+    e.preventDefault();
+  }
+  function onMove(e){
+    if(!dragging)return;
+    const y=e.touches?e.touches[0].clientY:e.clientY;
+    currentY=Math.max(0,Math.min(PULL_DIST,y-startY));
+    ball.style.transition='none';
+    base.style.transition='none';
+    ball.style.transform=`translateY(${currentY}px)`;
+    base.style.transform=`translateY(${currentY}px)`;
+    e.preventDefault();
+  }
+  function onEnd(){
+    if(!dragging)return;
+    dragging=false;
+    if(currentY>=PULL_DIST*0.6){
+      // Llegó suficientemente abajo — disparar
+      ball.style.transition='transform .5s cubic-bezier(.34,1.56,.64,1)';
+      base.style.transition='transform .5s cubic-bezier(.34,1.56,.64,1)';
+      ball.style.transform='translateY(0px)';
+      base.style.transform='translateY(0px)';
+      slSpin();
+    } else {
+      // No llegó — volver arriba suavemente
+      ball.style.transition='transform .3s ease';
+      base.style.transition='transform .3s ease';
+      ball.style.transform='translateY(0px)';
+      base.style.transform='translateY(0px)';
+    }
+    currentY=0;
+  }
+
+  lever.addEventListener('mousedown',onStart);
+  lever.addEventListener('touchstart',onStart,{passive:false});
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('touchmove',onMove,{passive:false});
+  window.addEventListener('mouseup',onEnd);
+  window.addEventListener('touchend',onEnd);
+})();
 
 // ── SPIN PRINCIPAL ───────────────────────────────────────
 function slAdj(d) { slBet = Math.max(5, Math.min(500, slBet + d)); document.getElementById('sbd').textContent = '$' + slBet; }
