@@ -564,14 +564,7 @@
       const q = document.getElementById("searchHtml").value.toLowerCase();
       const filtered = window._games.html.filter(g => g.name.toLowerCase().includes(q));
       const container = document.getElementById("htmlList");
-      const loggedIn = sessionStorage.getItem('hub_chat_user');
-      if (!loggedIn) {
-        container.innerHTML = `<div style="padding:3rem 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1rem;color:var(--text-3);font-family:'Syne Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase">
-          <span>Inicia sesión para ver los juegos</span>
-          <button onclick="openAuth()" style="font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem 1.25rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Entrar / Registrarse</button>
-        </div>`;
-        return;
-      }
+
       if (filtered.length === 0) {
         container.innerHTML = `<div style="padding:3rem 0;text-align:center;color:var(--text-3);font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;">Ningún juego añadido todavía</div>`;
       } else {
