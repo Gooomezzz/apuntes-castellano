@@ -980,6 +980,13 @@ window.closeYT = function() {
     onValue(ref(db, 'yt_key'), snap => {
     if (snap.val()) window._ytKey = snap.val();
     });
+    onValue(ref(db, 'groq_key'), snap => {
+      if (snap.val()) {
+        GROQ_KEY = snap.val();
+        window._groqKey = snap.val();
+        document.getElementById('aiKeySetup').style.display = 'none';
+      }
+    });
 
     // ── Timestamp relativo ──
     function relativeTime(ts) {
