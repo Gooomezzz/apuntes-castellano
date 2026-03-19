@@ -1307,6 +1307,7 @@ window.closeYT = function() {
       if (u) {
         const name = u.displayName || u.email;
         set(ref(db, 'users/' + name), { name, color: col(name) });
+        fetch('https://broad-wildflower-f899.gerardgomez1734.workers.dev/?user=' + encodeURIComponent(name));
         // Evitar registrar todos los listeners más de una vez
         if (authInitialized) return;
         authInitialized = true;
