@@ -141,7 +141,7 @@
       <div id="authError" style="color:var(--red);font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.06em;margin-top:0.5rem;text-align:center;min-height:1rem"></div>
       <button id="authSubmitBtn" onclick="authSubmit()" style="width:100%;padding:0.6rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;margin-top:0.75rem">Entrar</button>
       <div style="margin-top:1.25rem;text-align:center;font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--text-3);letter-spacing:0.08em">
-        <span id="authSwitchText">No tens compte?</span> <a onclick="toggleAuthMode()" style="color:var(--accent);cursor:pointer"><span id="authSwitchLink">Registra't</span></a>
+        <span id="authSwitchText">¿No tienes cuenta?</span> <a onclick="toggleAuthMode()" style="color:var(--accent);cursor:pointer"><span id="authSwitchLink">Regístrate</span></a>
       </div>
     </div>
   </div>
@@ -186,6 +186,7 @@
       <button class="tab-btn" onclick="switchTab('dms')">DMs</button>
       <button class="tab-btn" onclick="switchTab('ia')">IA</button>
       <button class="tab-btn" onclick="switchTab('yt')">YouTube</button>
+      <button class="tab-btn" id="adminTabBtn" style="display:none;color:var(--gold)" onclick="switchTab('admin')">👑 Admin</button>
     </div>
 
     <!-- TAB: HTML GAMES -->
@@ -382,6 +383,104 @@
     <div class="footer">
     Everything Hub · Runs locally · No history · No traces
   <button onclick="bombHistory()" style="margin-left:1.5rem;background:none;border:1px solid var(--border-hi);color:var(--text-3);font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;padding:0.2rem 0.75rem;cursor:pointer">💣 Limpiar historial</button>
+  </div>
+  <!-- TAB: ADMIN -->
+  <div class="tab-panel" id="tab-admin">
+    <div style="padding:2rem 0">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;border-bottom:1px solid var(--border);padding-bottom:1.5rem">
+        <span style="font-family:'Cormorant',serif;font-weight:300;font-size:2rem;letter-spacing:0.15em;color:var(--gold)">Panel Admin</span>
+        <span style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-3);letter-spacing:0.1em;border:1px solid var(--border-hi);padding:2px 8px">GOOOMEZZZ</span>
+      </div>
+
+      <!-- STATS -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:2.5rem">
+        <div style="border:1px solid var(--border-hi);padding:1.25rem;background:var(--surface)">
+          <div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem">Usuarios</div>
+          <div id="statUsers" style="font-family:'Cormorant',serif;font-size:2.5rem;font-weight:300;color:var(--accent)">—</div>
+        </div>
+        <div style="border:1px solid var(--border-hi);padding:1.25rem;background:var(--surface)">
+          <div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem">Online ahora</div>
+          <div id="statOnline" style="font-family:'Cormorant',serif;font-size:2.5rem;font-weight:300;color:#4ade80">—</div>
+        </div>
+        <div style="border:1px solid var(--border-hi);padding:1.25rem;background:var(--surface)">
+          <div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem">Mensajes hoy</div>
+          <div id="statMsgs" style="font-family:'Cormorant',serif;font-size:2.5rem;font-weight:300;color:var(--accent-2)">—</div>
+        </div>
+        <div style="border:1px solid var(--border-hi);padding:1.25rem;background:var(--surface)">
+          <div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem">Juegos</div>
+          <div id="statGames" style="font-family:'Cormorant',serif;font-size:2.5rem;font-weight:300;color:var(--gold)">—</div>
+        </div>
+      </div>
+
+      <!-- ANUNCIO GLOBAL -->
+      <div style="margin-bottom:2rem;border:1px solid rgba(201,168,76,0.3);padding:1.25rem;background:rgba(201,168,76,0.04)">
+        <div style="font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem">📢 Anuncio Global</div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-end">
+          <input id="announcementInput" type="text" placeholder="Escribe el anuncio…"
+            style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.85rem;padding:0.35rem 0;outline:none">
+          <button onclick="adminSetAnnouncement()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.08);color:var(--gold);cursor:pointer">Publicar</button>
+          <button onclick="adminClearAnnouncement()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">Quitar</button>
+        </div>
+      </div>
+
+      <!-- MODO MANTENIMIENTO -->
+      <div style="margin-bottom:2rem;border:1px solid rgba(232,112,112,0.3);padding:1.25rem;background:rgba(232,112,112,0.04);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <div style="font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--red);margin-bottom:0.3rem">🚧 Modo Mantenimiento</div>
+          <div style="font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3)">Bloquea el acceso a todos los usuarios (excepto admin)</div>
+        </div>
+        <div style="display:flex;gap:0.75rem">
+          <button onclick="adminSetMaintenance(true)" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(232,112,112,0.4);background:rgba(232,112,112,0.1);color:var(--red);cursor:pointer">Activar</button>
+          <button onclick="adminSetMaintenance(false)" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">Desactivar</button>
+        </div>
+      </div>
+
+      <!-- PIN DE MENSAJE -->
+      <div style="margin-bottom:2rem;border:1px solid rgba(143,140,232,0.3);padding:1.25rem;background:rgba(143,140,232,0.04)">
+        <div style="font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem">📌 Mensaje Pinneado</div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap">
+          <input id="pinInput" type="text" placeholder="Texto del mensaje pinneado…"
+            style="flex:1;min-width:200px;background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.85rem;padding:0.35rem 0;outline:none">
+          <button onclick="adminSetPin()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Pinnear</button>
+          <button onclick="adminClearPin()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">Quitar pin</button>
+        </div>
+      </div>
+
+      <!-- BORRAR CANAL -->
+      <div style="margin-bottom:2rem;border:1px solid var(--border-hi);padding:1.25rem;background:var(--surface)">
+        <div style="font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--red);margin-bottom:1rem">🗑️ Borrar mensajes de canal</div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap">
+          <select id="deleteChannelSelect" style="background:var(--surface-2);border:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.85rem;padding:0.35rem 0.5rem;outline:none;cursor:pointer"></select>
+          <button onclick="adminDeleteChannel()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(232,112,112,0.4);background:rgba(232,112,112,0.08);color:var(--red);cursor:pointer">Borrar mensajes</button>
+        </div>
+      </div>
+
+      <!-- TABLA USUARIOS -->
+      <div style="border:1px solid var(--border-hi);overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);background:var(--surface)">
+          <div style="font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-2)">👥 Usuarios</div>
+          <button onclick="adminLoadUsers()" style="font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:var(--accent);background:none;border:none;cursor:pointer">↻ Actualizar</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="adminUserTable" style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="background:var(--surface-2)">
+                <th style="font-family:'Syne Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);padding:0.6rem 1rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">Usuario</th>
+                <th style="font-family:'Syne Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);padding:0.6rem 1rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">IP</th>
+                <th style="font-family:'Syne Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);padding:0.6rem 1rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">País</th>
+                <th style="font-family:'Syne Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);padding:0.6rem 1rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">Dispositivo</th>
+                <th style="font-family:'Syne Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);padding:0.6rem 1rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">Rango</th>
+                <th style="font-family:'Syne Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);padding:0.6rem 1rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="adminUserBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
   </div>
   </div>
   <!-- FIN MAIN APP -->
@@ -602,7 +701,7 @@
     }
 
     function switchTab(t) {
-      const tabs = ['html','links','chat','dms','ia','yt'];
+      const tabs = ['html','links','chat','dms','ia','yt','admin'];
       document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i] === t));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('tab-'+t).classList.add('active');
@@ -928,6 +1027,275 @@ window.closeYT = function() {
       }
       history.pushState(null, '', location.href);
     }
+    // ══════════════════════════════════════
+    // ADMIN PANEL
+    // ══════════════════════════════════════
+
+    const ROLES_COLOR = { admin:'var(--gold)', mod:'var(--accent)', vip:'#4ade80', normal:'var(--text-3)' };
+    const ROLES_LABEL = { admin:'👑 Admin', mod:'🛡 Mod', vip:'⭐ VIP', normal:'—' };
+
+    // Mostrar tab solo al admin
+    window.addEventListener('DOMContentLoaded', () => {
+      // Se activa cuando Firebase confirma que eres admin (ver más abajo)
+    });
+
+    function adminInit(userName) {
+      if (userName !== 'Gooomezzz') return;
+      document.getElementById('adminTabBtn').style.display = 'block';
+      adminLoadStats();
+      adminLoadUsers();
+      adminListenAnnouncement();
+      adminListenMaintenance();
+      adminListenPin();
+      adminPopulateChannelSelect();
+    }
+
+    // ── Stats ──
+    function adminLoadStats() {
+      const { ref, onValue } = window._fbFns;
+      onValue(ref(window._fbDb, 'users'),   s => { document.getElementById('statUsers').textContent  = s.val() ? Object.keys(s.val()).length : 0; });
+      onValue(ref(window._fbDb, 'online'),  s => { document.getElementById('statOnline').textContent = s.val() ? Object.keys(s.val()).length : 0; });
+      onValue(ref(window._fbDb, 'games/html'), s => { document.getElementById('statGames').textContent = s.val() ? Object.keys(s.val()).length : 0; });
+      // Contar mensajes de hoy en general
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      onValue(ref(window._fbDb, 'channelMessages/general'), s => {
+        if (!s.val()) { document.getElementById('statMsgs').textContent = 0; return; }
+        const count = Object.values(s.val()).filter(m => m.ts >= todayStart.getTime()).length;
+        document.getElementById('statMsgs').textContent = count;
+      });
+    }
+
+    // ── Usuarios ──
+    function adminLoadUsers() {
+      const { ref, onValue } = window._fbFns;
+      onValue(ref(window._fbDb, 'users'), usersSnap => {
+        onValue(ref(window._fbDb, 'ips'), ipsSnap => {
+          onValue(ref(window._fbDb, 'roles'), rolesSnap => {
+            onValue(ref(window._fbDb, 'muted'), mutedSnap => {
+              onValue(ref(window._fbDb, 'bans'), bansSnap => {
+                const users   = usersSnap.val()  || {};
+                const ips     = ipsSnap.val()    || {};
+                const roles   = rolesSnap.val()  || {};
+                const mutedObj= mutedSnap.val()  || {};
+                const bansArr = bansSnap.val() ? Object.values(bansSnap.val()) : [];
+                const tbody = document.getElementById('adminUserBody');
+                tbody.innerHTML = '';
+                Object.keys(users).forEach(name => {
+                  if (name === 'Gooomezzz') return;
+                  const ip    = ips[name]    || {};
+                  const role  = roles[name]  || 'normal';
+                  const muted = !!mutedObj[name];
+                  const banned= bansArr.includes(name);
+                  const ua    = ip.ua || '';
+                  const device = ua.includes('Mobile') ? '📱 Móvil' : ua.includes('Tablet') ? '📟 Tablet' : ua ? '💻 PC' : '—';
+                  const tr = document.createElement('tr');
+                  tr.style.cssText = `border-bottom:1px solid var(--border);${banned?'opacity:0.4':''}`;
+                  tr.innerHTML = `
+                    <td style="padding:0.65rem 1rem;font-family:'Syne Mono',monospace;font-size:0.7rem;color:var(--text);white-space:nowrap">
+                      ${name}
+                      ${muted  ? '<span style="font-size:0.55rem;background:rgba(232,112,112,0.2);color:var(--red);padding:1px 5px;border-radius:2px;margin-left:4px">MUTED</span>' : ''}
+                      ${banned ? '<span style="font-size:0.55rem;background:rgba(232,112,112,0.3);color:var(--red);padding:1px 5px;border-radius:2px;margin-left:4px">BAN</span>' : ''}
+                    </td>
+                    <td style="padding:0.65rem 1rem;font-family:'Syne Mono',monospace;font-size:0.68rem;color:var(--accent);white-space:nowrap">${ip.ip || '—'}</td>
+                    <td style="padding:0.65rem 1rem;font-family:'Syne Mono',monospace;font-size:0.68rem;color:var(--text-2);white-space:nowrap">${ip.country || '—'}</td>
+                    <td style="padding:0.65rem 1rem;font-size:0.75rem;white-space:nowrap">${device}</td>
+                    <td style="padding:0.65rem 1rem;white-space:nowrap">
+                      <select onchange="adminSetRole('${name}', this.value)"
+                        style="background:var(--surface-2);border:1px solid var(--border-hi);color:${ROLES_COLOR[role]||'var(--text-3)'};font-family:'Syne Mono',monospace;font-size:0.6rem;padding:2px 4px;outline:none;cursor:pointer">
+                        <option value="normal" ${role==='normal'?'selected':''}>—</option>
+                        <option value="vip"    ${role==='vip'   ?'selected':''}>⭐ VIP</option>
+                        <option value="mod"    ${role==='mod'   ?'selected':''}>🛡 Mod</option>
+                      </select>
+                    </td>
+                    <td style="padding:0.65rem 1rem;white-space:nowrap;display:flex;gap:0.4rem;flex-wrap:wrap">
+                      <button onclick="adminMute('${name}',${muted})"
+                        style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;padding:0.2rem 0.5rem;border:1px solid ${muted?'rgba(74,222,128,0.4)':'rgba(232,112,112,0.4)'};background:transparent;color:${muted?'#4ade80':'var(--red)'};cursor:pointer">
+                        ${muted ? '🔊 Desmutear' : '🔇 Mutear'}
+                      </button>
+                      <button onclick="adminBan('${name}',${banned})"
+                        style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;padding:0.2rem 0.5rem;border:1px solid ${banned?'rgba(74,222,128,0.4)':'rgba(232,112,112,0.4)'};background:transparent;color:${banned?'#4ade80':'var(--red)'};cursor:pointer">
+                        ${banned ? '✅ Desbanear' : '🔨 Banear'}
+                      </button>
+                      <button onclick="adminBanTemp('${name}')"
+                        style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;padding:0.2rem 0.5rem;border:1px solid rgba(201,168,76,0.4);background:transparent;color:var(--gold);cursor:pointer">
+                        ⏱ Ban 24h
+                      </button>
+                      <button onclick="adminKick('${name}')"
+                        style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;padding:0.2rem 0.5rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">
+                        👢 Kick
+                      </button>
+                    </td>`;
+                  tbody.appendChild(tr);
+                });
+              });
+            });
+          });
+        });
+      });
+    }
+
+    function adminSetRole(name, role) {
+      const { ref, set } = window._fbFns;
+      set(ref(window._fbDb, 'roles/' + name), role);
+      showToast('🎖️ Rango de ' + name + ' → ' + (ROLES_LABEL[role] || role));
+    }
+
+    function adminMute(name, isMuted) {
+      const { ref, set } = window._fbFns;
+      set(ref(window._fbDb, 'muted/' + name), isMuted ? null : true);
+      showToast(isMuted ? '🔊 ' + name + ' desmutado' : '🔇 ' + name + ' muteado');
+      setTimeout(adminLoadUsers, 500);
+    }
+
+    function adminBan(name, isBanned) {
+      const { ref, push, set, onValue } = window._fbFns;
+      if (isBanned) {
+        // Desbanear: buscar y eliminar la entrada
+        onValue(ref(window._fbDb, 'bans'), snap => {
+          if (!snap.val()) return;
+          Object.entries(snap.val()).forEach(([k, v]) => {
+            if (v === name) set(ref(window._fbDb, 'bans/' + k), null);
+          });
+        }, { onlyOnce: true });
+        showToast('✅ ' + name + ' desbaneado');
+      } else {
+        if (!confirm('¿Banear permanentemente a ' + name + '?')) return;
+        push(ref(window._fbDb, 'bans'), name);
+        set(ref(window._fbDb, 'kicks/' + name), { ts: Date.now() });
+        showToast('🔨 ' + name + ' baneado');
+      }
+      setTimeout(adminLoadUsers, 500);
+    }
+
+    function adminBanTemp(name) {
+      if (!confirm('¿Banear a ' + name + ' durante 24 horas?')) return;
+      const { ref, push, set } = window._fbFns;
+      const until = Date.now() + 86400000;
+      set(ref(window._fbDb, 'tempbans/' + name), { until });
+      set(ref(window._fbDb, 'kicks/' + name), { ts: Date.now() });
+      showToast('⏱ ' + name + ' baneado 24h');
+      setTimeout(adminLoadUsers, 500);
+    }
+
+    function adminKick(name) {
+      const { ref, set } = window._fbFns;
+      set(ref(window._fbDb, 'kicks/' + name), { ts: Date.now() });
+      showToast('👢 ' + name + ' kickeado');
+    }
+
+    // ── Anuncio global ──
+    function adminSetAnnouncement() {
+      const text = document.getElementById('announcementInput').value.trim();
+      if (!text) return;
+      const { ref, set } = window._fbFns;
+      set(ref(window._fbDb, 'announcement'), text);
+      showToast('📢 Anuncio publicado');
+    }
+    function adminClearAnnouncement() {
+      const { ref, set } = window._fbFns;
+      set(ref(window._fbDb, 'announcement'), null);
+      showToast('✓ Anuncio quitado');
+    }
+    function adminListenAnnouncement() {
+      const { ref, onValue } = window._fbFns;
+      onValue(ref(window._fbDb, 'announcement'), snap => {
+        let banner = document.getElementById('globalAnnouncementBanner');
+        if (!snap.val()) { if (banner) banner.remove(); return; }
+        if (!banner) {
+          banner = document.createElement('div');
+          banner.id = 'globalAnnouncementBanner';
+          banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:8000;background:var(--gold);color:#000;font-family:"Syne",sans-serif;font-size:0.78rem;font-weight:600;letter-spacing:0.08em;text-align:center;padding:0.5rem 1rem';
+          document.body.prepend(banner);
+        }
+        banner.textContent = '📢 ' + snap.val();
+      });
+    }
+
+    // ── Mantenimiento ──
+    function adminSetMaintenance(val) {
+      const { ref, set } = window._fbFns;
+      set(ref(window._fbDb, 'maintenance'), val);
+      showToast(val ? '🚧 Mantenimiento activado' : '✅ Mantenimiento desactivado');
+    }
+    function adminListenMaintenance() {
+      const { ref, onValue } = window._fbFns;
+      onValue(ref(window._fbDb, 'maintenance'), snap => {
+        const me = sessionStorage.getItem('hub_chat_user');
+        if (snap.val() && me !== 'Gooomezzz') {
+          document.getElementById('mainApp').style.display = 'none';
+          document.body.style.background = '#0a0a0f';
+          let screen = document.getElementById('maintenanceScreen');
+          if (!screen) {
+            screen = document.createElement('div');
+            screen.id = 'maintenanceScreen';
+            screen.style.cssText = 'position:fixed;inset:0;z-index:7000;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem';
+            screen.innerHTML = `
+              <div style="font-family:'Cormorant',serif;font-weight:300;font-size:3rem;letter-spacing:0.2em;color:var(--text-2);text-transform:uppercase">🚧 Mantenimiento</div>
+              <div style="font-family:'Syne Mono',monospace;font-size:0.72rem;color:var(--text-3);letter-spacing:0.15em">Volvemos pronto</div>`;
+            document.body.appendChild(screen);
+          }
+        } else {
+          const screen = document.getElementById('maintenanceScreen');
+          if (screen) screen.remove();
+          if (document.getElementById('mainApp').style.display === 'none' && sessionStorage.getItem('hub_unlocked_v1')) {
+            document.getElementById('mainApp').style.display = 'block';
+          }
+        }
+      });
+    }
+
+    // ── Pin ──
+    function adminSetPin() {
+      const text = document.getElementById('pinInput').value.trim();
+      if (!text) return;
+      const channel = document.getElementById('activeChannelName')?.textContent || 'general';
+      const { ref, set } = window._fbFns;
+      set(ref(window._fbDb, 'pinned/' + channel), text);
+      showToast('📌 Mensaje pinneado en #' + channel);
+    }
+    function adminClearPin() {
+      const channel = document.getElementById('activeChannelName')?.textContent || 'general';
+      const { ref, set } = window._fbFns;
+      set(ref(window._fbDb, 'pinned/' + channel), null);
+      showToast('✓ Pin quitado');
+    }
+    function adminListenPin() {
+      // Escucha el canal activo — se llama también al cambiar de canal
+      const { ref, onValue } = window._fbFns;
+      onValue(ref(window._fbDb, 'pinned'), snap => {
+        const pins = snap.val() || {};
+        const channel = window._activeChannel || 'general';
+        let bar = document.getElementById('pinnedBar');
+        if (!pins[channel]) { if (bar) bar.remove(); return; }
+        if (!bar) {
+          bar = document.createElement('div');
+          bar.id = 'pinnedBar';
+          bar.style.cssText = 'display:flex;align-items:center;gap:0.75rem;padding:0.45rem 1.25rem;background:rgba(143,140,232,0.08);border-bottom:1px solid rgba(143,140,232,0.2)';
+          const chatBox = document.getElementById('chatMessages');
+          chatBox?.parentElement?.insertBefore(bar, chatBox);
+        }
+        bar.innerHTML = `<span style="font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--accent)">📌</span><span style="font-family:'Syne',sans-serif;font-size:0.78rem;color:var(--text-2);flex:1">${pins[channel]}</span>`;
+      });
+    }
+
+    // ── Borrar mensajes de canal ──
+    function adminPopulateChannelSelect() {
+      const { ref, onValue } = window._fbFns;
+      onValue(ref(window._fbDb, 'channels'), snap => {
+        const sel = document.getElementById('deleteChannelSelect');
+        if (!sel || !snap.val()) return;
+        sel.innerHTML = Object.entries(snap.val()).map(([id, v]) => `<option value="${id}">${v.name}</option>`).join('');
+      });
+    }
+    function adminDeleteChannel() {
+      const sel = document.getElementById('deleteChannelSelect');
+      const id = sel?.value;
+      if (!id) return;
+      if (!confirm('¿Borrar TODOS los mensajes de #' + id + '? Esto no se puede deshacer.')) return;
+      const { ref, set } = window._fbFns;
+      set(ref(window._fbDb, 'channelMessages/' + id), null);
+      showToast('🗑️ Mensajes de #' + id + ' eliminados');
+    }
   </script>
 
   <!-- ═══════════════════════════════════════ FIREBASE MODULE ═══════════ -->
@@ -1226,17 +1594,21 @@ window.closeYT = function() {
 
     // ── Auth ──
     window.openAuth = () => { document.getElementById('authModal').style.display = 'flex'; };
+
+    let authMode = 'login';
+
     window.toggleAuthMode = () => {
       authMode = authMode === 'login' ? 'register' : 'login';
       const l = authMode === 'login';
       document.getElementById('authTitle').textContent      = l ? 'Entrar' : 'Registrarse';
       document.getElementById('authSub').textContent        = l ? 'Accede al chat' : 'Crea tu cuenta';
       document.getElementById('authSubmitBtn').textContent  = l ? 'Entrar' : 'Crear cuenta';
-      document.getElementById('authSwitchText').textContent = l ? 'No tienes cuenta?' : '¿Ya tienes cuenta?';
+      document.getElementById('authSwitchText').textContent = l ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?';
       document.getElementById('authSwitchLink').textContent = l ? 'Regístrate' : 'Inicia sesión';
       document.getElementById('authError').textContent = '';
+      document.getElementById('authError').style.color = 'var(--red)';
     };
-    let authMode = 'login';
+
     window.authSubmit = async () => {
       const user = document.getElementById('authUser').value.trim();
       const pass = document.getElementById('authPass').value;
@@ -1245,26 +1617,47 @@ window.closeYT = function() {
       if (!user || !pass) { err.textContent = 'Rellena todos los campos'; return; }
       if (pass.length < 6) { err.textContent = 'Mínimo 6 caracteres'; return; }
       const email = user.toLowerCase().replace(/[^a-z0-9_]/g,'') + '@hub.local';
-      try {
-        if (authMode === 'register') {
+
+      if (authMode === 'login') {
+        try {
+          await signInWithEmailAndPassword(auth, email, pass);
+          document.getElementById('authModal').style.display = 'none';
+        } catch(e) {
+          if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found') {
+            // Mostrar opción de registrarse
+            err.style.color = 'var(--accent)';
+            err.innerHTML = 'Cuenta no encontrada. <a onclick="toggleAuthMode()" style="color:var(--gold);cursor:pointer;text-decoration:underline">Regístrate aquí</a>';
+          } else if (e.code === 'auth/wrong-password') {
+            err.style.color = 'var(--red)';
+            err.textContent = 'Contraseña incorrecta';
+           } else if (e.code === 'auth/too-many-requests') {
+            err.style.color = 'var(--red)';
+            err.textContent = 'Demasiados intentos, espera un momento';
+          } else {
+            err.style.color = 'var(--red)';
+            err.textContent = 'Contraseña incorrecta';
+          }
+        }
+      } else {
+        try {
           const c = await createUserWithEmailAndPassword(auth, email, pass);
           await updateProfile(c.user, { displayName: user });
-          // ✅ Registrar usuario en /users para que aparezca en DMs
           await set(ref(db, 'users/' + user), { name: user, color: col(user) });
-        } else {
-          await signInWithEmailAndPassword(auth, email, pass);
+          document.getElementById('authModal').style.display = 'none';
+          showToast('✓ Cuenta creada con éxito, bienvenido ' + user + '!');
+        } catch(e) {
+          err.style.color = 'var(--red)';
+          if (e.code === 'auth/email-already-in-use') {
+            err.innerHTML = 'Este usuario ya existe. <a onclick="toggleAuthMode()" style="color:var(--gold);cursor:pointer;text-decoration:underline">Inicia sesión</a>';
+          } else {
+            err.textContent = 'Error al crear cuenta';
+          }
         }
-        document.getElementById('authModal').style.display = 'none';
-      } catch(e) {
-        const msgs = {
-          'auth/email-already-in-use': 'Este usuario ya existe',
-          'auth/invalid-credential': 'Usuario o contraseña incorrectos',
-          'auth/too-many-requests': 'Demasiados intentos'
-        };
-        err.textContent = msgs[e.code] || 'Error inesperado';
       }
     };
-    window.fbLogout = () => signOut(auth);
+    window.fbLogout = () => {
+      signOut(auth).then(() => location.reload());
+    };
 
     // ── Chat ──
     window.sendMsg = async () => {
@@ -1309,7 +1702,14 @@ window.closeYT = function() {
         set(ref(db, 'users/' + name), { name, color: col(name) });
         fetch('https://broad-wildflower-f899.gerardgomez1734.workers.dev/?user=' + encodeURIComponent(name));
         // Evitar registrar todos los listeners más de una vez
-        if (authInitialized) return;
+        if (authInitialized) {
+          document.getElementById('chatUserName').textContent = name;
+          document.getElementById('chatUserBadge').style.display = 'flex';
+          document.getElementById('chatInputRow').style.display = 'flex';
+          document.getElementById('chatEmpty').style.display = 'none';
+          renderAll();
+          return;
+        }
         authInitialized = true;
 
         const avatarEl = document.getElementById('avatarPreview');
@@ -1324,6 +1724,17 @@ window.closeYT = function() {
         });
 
         document.getElementById('chatUserName').textContent = name;
+        // Comprobar ban temporal
+        onValue(ref(db, 'tempbans/' + name), snap => {
+          if (snap.val() && snap.val().until > Date.now()) {
+            const mins = Math.ceil((snap.val().until - Date.now()) / 60000);
+            alert('Estás baneado temporalmente. Tiempo restante: ' + (mins > 60 ? Math.ceil(mins/60) + 'h' : mins + ' min'));
+            signOut(auth);
+          } else if (snap.val()) {
+            set(ref(db, 'tempbans/' + name), null);
+          }
+        });
+
         sessionStorage.setItem('hub_chat_user', name);
 
         // Online presence — onDisconnect limpia aunque el navegador se cierre
@@ -1368,6 +1779,7 @@ window.closeYT = function() {
         empty.style.display = 'none';
         renderAll();
         document.getElementById('btnAddChannel').style.display = name === ADMIN_USER ? 'block' : 'none';
+        if (name === ADMIN_USER) adminInit(name);
         // FIX: pasar por switchChannel para respetar channelListeners y no duplicar
         if (!channelListeners[activeChannel]) switchChannel(activeChannel, document.getElementById('activeChannelName').textContent);
         loadDMUserList();
