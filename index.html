@@ -359,6 +359,7 @@
 
     <!-- AÑADIR JUEGO — fuera de todos los tabs -->
     <div class="add-section">
+      <div class="add-section" id="addGameSection" style="display:none"></div>
       <div class="add-title">Añadir Juego</div>
       <div class="add-row">
         <div class="add-field">
@@ -617,10 +618,16 @@
     function showApp() {
       document.getElementById("redirecting").classList.add("hidden");
       document.getElementById("mainApp").style.display = "block";
-      document.body.style.background = '#0a0a0f';  // ← añade esto
+      document.body.style.background = '#0a0a0f';
       document.body.classList.add("ready");
       renderAll();
       showToast("✓ Desbloqueado");
+      // Re-render canales al mostrar la app
+      setTimeout(() => {
+        if (window._renderChannels && window._getCurrentChannels) {
+          window._renderChannels(window._getCurrentChannels());
+        }
+      }, 300);
     }
 
     let typed = "", resetTimer = null;
@@ -705,7 +712,15 @@
       document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i] === t));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('tab-'+t).classList.add('active');
-    }
+      // Limpiar badge al entrar al tab
+      if (t === 'chat') {
+        const badge = document.querySelector('.tab-notif-chat');
+        if (badge) badge.remove();
+      }
+      if (t === 'dms') {
+        // ya se limpia solo al abrir conversación
+      }
+   }
 
     // ── AI ──
     function setPersona(p, btn) {
@@ -829,12 +844,34 @@
         if (ts >= yesterdayStart.getTime()) return 'ayer ' + d.toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
         return d.toLocaleDateString('es', {day:'numeric', month:'short'}) + ' ' + d.toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
         }
-    function renderDMMessage(container, d, isOwn) {
+    function renderDMMessage(container, d, isOwn, msgKey) {
       const div = document.createElement('div');
       div.setAttribute('data-ctx', '1');
       div.style.cssText = `display:flex;gap:0.6rem;align-items:flex-start;${isOwn?'flex-direction:row-reverse':''}`;
       if (!isOwn) {
-        div.addEventListener('contextmenu', e => showCtxMenu(e, d.from, div, null));
+        div.addEventListener('contextmenu', e => showCtxMenu(e, d.name, div, msgKey));
+      } else {
+        // Botón borrar propio mensaje al hacer hover
+        div.addEventListener('mouseenter', () => {
+          if (!div.querySelector('.del-own-btn')) {
+            const btn = document.createElement('button');
+            btn.className = 'del-own-btn';
+            btn.textContent = '🗑';
+            btn.style.cssText = 'position:absolute;top:-8px;left:-8px;background:var(--surface-2);border:1px solid var(--border-hi);color:var(--red);font-size:0.65rem;padding:2px 5px;cursor:pointer;border-radius:2px;opacity:0.8;z-index:10';
+            btn.onclick = async (e) => {
+              e.stopPropagation();
+              if (!confirm('¿Borrar tu mensaje?')) return;
+              div.remove();
+              const { ref, set } = window._fbFns;
+              set(ref(window._fbDb, msgKey), null);
+            };
+            div.style.position = 'relative';
+            div.appendChild(btn);
+          }
+        });
+        div.addEventListener('mouseleave', () => {
+          div.querySelector('.del-own-btn')?.remove();
+        });
       }
       div.innerHTML = `
         <div style="width:24px;height:24px;border-radius:50%;background:${d.color};display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace">${d.from.slice(0,2).toUpperCase()}</div>
@@ -1389,6 +1426,8 @@ window.closeYT = function() {
     }
     let channelListeners = {};
     let channelCache = {}; // { channelId: [divElement, ...] }
+    window._renderChannels = (chs) => renderChannels(chs);
+    window._getCurrentChannels = () => currentChannels;
 
     function renderChannels(channels) {
       const list = document.getElementById('channelList');
@@ -1491,11 +1530,202 @@ window.closeYT = function() {
     }
 
     async function votePoll(pollId, channelId, optionIndex, myName) {
-      const { ref, set } = window._fbFns;
       await set(ref(db, 'channelMessages/' + channelId + '/' + pollId + '/votes/' + myName), optionIndex);
     }
 
+    const REACTION_EMOJIS = ['👍','❤️','😂','😮','👎','✅','💀','🤡'];
+
+    function renderReactions(msgKey, div, myName, isOwn) {
+      const safeKey = msgKey.replace(/\//g, '_');
+
+      // Bar de reacciones activas (siempre visible si hay reacciones)
+      let activeBar = div.querySelector('.reaction-bar');
+      if (!activeBar) {
+        activeBar = document.createElement('div');
+        activeBar.className = 'reaction-bar';
+        activeBar.style.cssText = 'display:flex;gap:0.25rem;flex-wrap:wrap;margin-top:4px;align-items:center';
+        div.querySelector('div[style*="flex-direction:column"]')?.appendChild(activeBar);
+      }
+
+      // Botón emoji que aparece al hover — pegado a la derecha del mensaje
+      let emojiTrigger = div.querySelector('.emoji-trigger');
+      if (!emojiTrigger) {
+        emojiTrigger = document.createElement('button');
+        emojiTrigger.className = 'emoji-trigger';
+        const triggerWrap = document.createElement('div');
+        triggerWrap.style.cssText = `position:absolute;${isOwn ? 'left:10px' : 'right:10px'};top:15px;display:flex;align-items:center;gap:3px;opacity:0;transition:opacity 0.15s;z-index:20`;
+        const QUICK_3 = ['😂','✅','🤡'];
+        QUICK_3.forEach(emoji => {
+          const qb = document.createElement('button');
+          qb.textContent = emoji;
+          qb.style.cssText = 'background:var(--surface-2);border:1px solid var(--border-hi);border-radius:6px;font-size:0.85rem;padding:4px 6px;cursor:pointer;line-height:1;transition:transform 0.1s,border-color 0.1s';
+          qb.onmouseenter = () => { qb.style.transform='scale(1.2)'; qb.style.borderColor='var(--accent)'; };
+          qb.onmouseleave = () => { qb.style.transform='scale(1)'; qb.style.borderColor='var(--border-hi)'; };
+          qb.onclick = async (e) => {
+            e.stopPropagation();
+            const rKey = 'reactions/' + safeKey + '/' + emoji.codePointAt(0) + '/' + myName;
+            const existing = await new Promise(res => {
+              onValue(ref(db, rKey), s => res(s.val()), { onlyOnce: true });
+            });
+            set(ref(db, rKey), existing ? null : true);
+          };
+          triggerWrap.appendChild(qb);
+        });
+
+        // Botón "..." para abrir picker completo
+        const moreBtn = document.createElement('button');
+        moreBtn.textContent = '···';
+        moreBtn.style.cssText = 'background:var(--surface-2);border:1px solid var(--border-hi);border-radius:6px;font-size:0.7rem;padding:4px 6px;cursor:pointer;color:var(--text-3);font-family:"Syne Mono",monospace;line-height:1;transition:border-color 0.1s,color 0.1s';
+        moreBtn.onmouseenter = () => { moreBtn.style.borderColor='var(--accent)'; moreBtn.style.color='var(--accent)'; };
+        moreBtn.onmouseleave = () => { moreBtn.style.borderColor='var(--border-hi)'; moreBtn.style.color='var(--text-3)'; };
+        moreBtn.onclick = (e) => { e.stopPropagation(); openEmojiPicker(e, safeKey, myName); };
+        triggerWrap.appendChild(moreBtn);
+
+        div.style.position = 'relative';
+        div.appendChild(triggerWrap);
+
+        div.addEventListener('mouseenter', () => triggerWrap.style.opacity = '1');
+        div.addEventListener('mouseleave', (e) => {
+          if (!e.relatedTarget || !div.contains(e.relatedTarget)) {
+            triggerWrap.style.opacity = '0';
+          }
+        });
+      }
+
+      // Escuchar reacciones activas
+      onValue(ref(db, 'reactions/' + safeKey), snap => {
+        const data = snap.val() || {};
+        activeBar.innerHTML = '';
+        Object.entries(data).forEach(([emojiCode, users]) => {
+          if (!users) return;
+          const count = Object.keys(users).length;
+          if (count === 0) return;
+          const emoji = String.fromCodePoint(parseInt(emojiCode));
+          const hasMyReaction = !!users[myName];
+          const btn = document.createElement('button');
+          btn.style.cssText = `background:${hasMyReaction ? 'rgba(143,140,232,0.15)' : 'rgba(255,255,255,0.04)'};border:1px solid ${hasMyReaction ? 'var(--accent)' : 'var(--border-hi)'};color:var(--text);font-size:0.75rem;padding:2px 8px;cursor:pointer;border-radius:12px;display:flex;align-items:center;gap:4px;transition:0.1s`;
+          btn.innerHTML = `${emoji}<span style="font-family:'Syne Mono',monospace;font-size:0.6rem;color:${hasMyReaction ? 'var(--accent)' : 'var(--text-2)'}">${count}</span>`;
+          btn.title = Object.keys(users).join(', ');
+          btn.onmouseenter = () => btn.style.borderColor = 'var(--accent)';
+          btn.onmouseleave = () => btn.style.borderColor = hasMyReaction ? 'var(--accent)' : 'var(--border-hi)';
+          btn.onclick = async (e) => {
+            e.stopPropagation();
+            const rKey = 'reactions/' + safeKey + '/' + emojiCode + '/' + myName;
+            set(ref(db, rKey), hasMyReaction ? null : true);
+          };
+          activeBar.appendChild(btn);
+        });
+      });
+    }
+
+    // Picker global — se abre desde el botón 😊
+    function openEmojiPicker(e, safeKey, myName) {
+      document.querySelectorAll('.emoji-picker-popup').forEach(p => p.remove());
+
+      const QUICK = ['👍','❤️','😂','😮','👎','✅','💀','🤡'];
+
+      const ALL = [
+        '🍆', '🍑', '💦', '🌮', '🍌', '🥕', '🍒', '🌽','😀','😁','😂','🤣','😃','😄','😅','😆','😇','😉','😊','🙂','🙃','😋','😌','😍','🥰','😘','😗','😙','😚',
+        '😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😔','😪',
+        '😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁',
+        '😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱',
+        '😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👾','🤖','😺','😸','😹','😻','😼',
+        '👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👍','👎',
+        '✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','💪','❤️','🧡','💛','💚','💙','💜','🖤',
+        '🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','✨','🎉','🎊','🎈','🎁','🏆','🥇','🎯','🎮',
+        '🔥','⚡','🌈','☀️','🌙','⭐','🌟','💫','🌊','🌺','🌸','🌼','🌻','🌹','🌷','🍀','🍁','🌿','🍕','🍔',
+        '🌮','🍜','🍣','🍦','🍰','🎂','🍫','🍬','🍭','🍺','🥂','☕','🚀','✈️','🚗','🏠','🌍','💯','✅','❌',
+        '❓','❗','💬','💭','🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈',
+      ];
+
+      const popup = document.createElement('div');
+      popup.className = 'emoji-picker-popup';
+      popup.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border-hi);border-radius:10px;padding:0.6rem;width:300px;box-shadow:0 8px 24px rgba(0,0,0,0.6)';
+
+      // Posicionar inteligentemente
+      const x = Math.min(e.clientX, window.innerWidth - 315);
+      const y = e.clientY + 10 + 250 > window.innerHeight ? e.clientY - 260 : e.clientY + 10;
+      popup.style.left = x + 'px';
+      popup.style.top = y + 'px';
+
+      // Emojis rápidos
+      const quickLabel = document.createElement('div');
+      quickLabel.textContent = 'Frecuentes';
+      quickLabel.style.cssText = "font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.35rem";
+      popup.appendChild(quickLabel);
+
+      const quickRow = document.createElement('div');
+      quickRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:2px;margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)';
+      QUICK.forEach(emoji => quickRow.appendChild(makeEmojiBtn(emoji, safeKey, myName, popup)));
+      popup.appendChild(quickRow);
+
+      // Buscador
+      const search = document.createElement('input');
+      search.placeholder = '🔍 Buscar emoji…';
+      search.style.cssText = 'width:100%;background:var(--surface-2);border:1px solid var(--border-hi);border-radius:6px;color:var(--text);font-family:"Syne",sans-serif;font-size:0.75rem;padding:0.3rem 0.6rem;outline:none;margin-bottom:0.4rem';
+      popup.appendChild(search);
+
+      // Grid todos
+      const allLabel = document.createElement('div');
+      allLabel.textContent = 'Todos';
+      allLabel.style.cssText = "font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.35rem";
+      popup.appendChild(allLabel);
+
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:2px;max-height:150px;overflow-y:auto';
+      grid.style.scrollbarWidth = 'thin';
+      popup.appendChild(grid);
+
+      const renderGrid = (list) => {
+        grid.innerHTML = '';
+        list.forEach(emoji => grid.appendChild(makeEmojiBtn(emoji, safeKey, myName, popup)));
+      };
+      renderGrid(ALL);
+
+      search.oninput = () => {
+        const q = search.value.trim().toLowerCase();
+        // Búsqueda básica por nombre en inglés aproximado no disponible,
+        // mostramos todos si no hay query
+        renderGrid(q ? ALL.filter(em => {
+          try { return em.includes(q); } catch { return false; }
+        }) : ALL);
+      };
+
+      document.body.appendChild(popup);
+      search.focus();
+
+      // Cerrar al clicar fuera
+      setTimeout(() => {
+        document.addEventListener('click', function handler(ev) {
+          if (!popup.contains(ev.target)) {
+            popup.remove();
+            document.removeEventListener('click', handler);
+          }
+        });
+      }, 10);
+    }
+
+    function makeEmojiBtn(emoji, safeKey, myName, popup) {
+      const eb = document.createElement('button');
+      eb.textContent = emoji;
+      eb.style.cssText = 'background:none;border:none;font-size:1.15rem;cursor:pointer;padding:3px 4px;border-radius:5px;transition:background 0.1s;line-height:1';
+      eb.onmouseenter = () => eb.style.background = 'rgba(255,255,255,0.1)';
+      eb.onmouseleave = () => eb.style.background = 'none';
+      eb.onclick = async (e) => {
+        e.stopPropagation();
+        popup.remove();
+        const rKey = 'reactions/' + safeKey + '/' + emoji.codePointAt(0) + '/' + myName;
+        const existing = await new Promise(res => {
+          onValue(ref(db, rKey), s => res(s.val()), { onlyOnce: true });
+        });
+        set(ref(db, rKey), existing ? null : true);
+      };
+      return eb;
+    }
+
+
     function switchChannel(id, chName) {
+      window._switchChannel = switchChannel;
       window._activeChannel = id;
       activeChannel = id;
       document.getElementById('activeChannelName').textContent = chName;
@@ -1522,7 +1752,11 @@ window.closeYT = function() {
         set(ref(db, 'channels/general'), { name: 'general', order: 0 });
         currentChannels = [{ id: 'general', name: 'general', order: 0 }];
       }
-      currentChannels.sort((a,b) => (a.order||0)-(b.order||0));
+      currentChannels.sort((a,b) => {
+        if (a.id === 'general') return -1;
+        if (b.id === 'general') return 1;
+        return (a.order||0) - (b.order||0);
+      });
       renderChannels(currentChannels);
     });
 
@@ -1544,6 +1778,21 @@ window.closeYT = function() {
             const div = renderPoll(d, snap.key, channelId, loggedName);
             if (!channelCache[channelId]) channelCache[channelId] = [];
             channelCache[channelId].push(div);
+            // Notificación tab Chat si no estás en ese tab
+            const isTabActive = document.getElementById('tab-chat').classList.contains('active');
+            if (!isTabActive) {
+              const chatTab = document.querySelector('.tab-btn[onclick="switchTab(\'chat\')"]');
+              if (chatTab) {
+                let badge = chatTab.querySelector('.tab-notif-chat');
+                if (!badge) {
+                  badge = document.createElement('span');
+                  badge.className = 'tab-notif-chat';
+                  badge.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:8px;background:var(--accent);color:#fff;font-size:0.55rem;font-weight:700;padding:0 4px;margin-left:6px;font-family:"Syne Mono",monospace;line-height:1';
+                  chatTab.appendChild(badge);
+                }
+                badge.textContent = (parseInt(badge.textContent) || 0) + 1;
+              }
+            }
             if (activeChannel === channelId) {
               document.getElementById('chatMessages').appendChild(div);
               document.getElementById('chatMessages').scrollTop = 999999;
@@ -1571,6 +1820,7 @@ window.closeYT = function() {
           </div>`;
         // Guardar en caché siempre
         if (!channelCache[channelId]) channelCache[channelId] = [];
+        renderReactions(msgKey, div, loggedName, isOwn);
         channelCache[channelId].push(div);
         // Solo pintar en DOM si este canal está activo ahora
         if (activeChannel === channelId) {
@@ -1668,6 +1918,10 @@ window.closeYT = function() {
       input.value = '';
       const name = u.displayName || u.email;
       if (bannedUsers.has(name)) { alert('Has sido baneado del chat.'); return; }
+      const isMuted = await new Promise(res => {
+        onValue(ref(db, 'muted/' + name), s => res(s.val()), { onlyOnce: true });
+      });
+      if (isMuted) { showToast('🔇 Estás muteado'); return; }
       await push(ref(db, 'channelMessages/' + activeChannel), {
         text, img: '', name, color: col(name), avatar: u._avatar||'', ts: Date.now()
       });
@@ -1694,6 +1948,7 @@ window.closeYT = function() {
     // ── Auth state ──
     let authInitialized = false;
     onAuthStateChanged(auth, u => {
+      renderChannels(currentChannels);
       const badge = document.getElementById('chatUserBadge');
       const empty = document.getElementById('chatEmpty');
       const row   = document.getElementById('chatInputRow');
@@ -1780,6 +2035,8 @@ window.closeYT = function() {
         renderAll();
         document.getElementById('btnAddChannel').style.display = name === ADMIN_USER ? 'block' : 'none';
         if (name === ADMIN_USER) adminInit(name);
+        // Mostrar sección añadir juego solo al admin
+        document.getElementById('addGameSection').style.display = name === ADMIN_USER ? 'block' : 'none';
         // FIX: pasar por switchChannel para respetar channelListeners y no duplicar
         if (!channelListeners[activeChannel]) switchChannel(activeChannel, document.getElementById('activeChannelName').textContent);
         loadDMUserList();
@@ -1793,6 +2050,7 @@ window.closeYT = function() {
           }
         });
       } else {
+        document.getElementById('addGameSection').style.display = 'none';
         authInitialized = false;
         badge.style.display = 'none';
         row.style.display   = 'none';
@@ -1964,7 +2222,8 @@ window.closeYT = function() {
         onChildAdded(ref(db, 'dms/' + key), snap => {
           const d = snap.val();
           if (activeDMUser === otherUser) {
-            renderDMMessage(document.getElementById('dmPanelMessages'), d, d.from === me);
+            const dmMsgKey = 'dms/' + key + '/' + snap.key;
+            renderDMMessage(document.getElementById('dmPanelMessages'), d, d.from === me, dmMsgKey);
             // ← AÑADE ESTO: actualizar lastSeen cada vez que llega un mensaje y la conv está abierta
             dmLastSeen[key] = Date.now();
             saveDmLastSeen();
