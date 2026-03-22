@@ -668,6 +668,11 @@
       const q = document.getElementById("searchHtml").value.toLowerCase();
       const filtered = window._games.html.filter(g => g.name.toLowerCase().includes(q));
       filtered.sort((a, b) => a.name.localeCompare(b.name));
+      filtered.sort((a, b) => {
+        if (a.name.toLowerCase() === 'casino') return -1;
+        if (b.name.toLowerCase() === 'casino') return 1;
+        return 0;
+      });
       const container = document.getElementById("htmlList");
 
       if (filtered.length === 0) {
