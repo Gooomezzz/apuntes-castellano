@@ -667,6 +667,7 @@
     function renderHtmlGames() {
       const q = document.getElementById("searchHtml").value.toLowerCase();
       const filtered = window._games.html.filter(g => g.name.toLowerCase().includes(q));
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
       const container = document.getElementById("htmlList");
 
       if (filtered.length === 0) {
