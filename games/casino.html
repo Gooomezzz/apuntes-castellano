@@ -856,9 +856,13 @@ if (window._fbCasinoQueue) {
 onValue(ref(db,'casino/leaderboard'), snap => {
   const data = snap.val() || {};
   const players = Object.entries(data)
-    .map(([name,d]) => ({name, balance: d.balance||0}))
+    .map(([name,d]) => ({
+      name,
+      balance: d.balance || 0,
+      garageIds: d.garageIds || []
+    }))
     .sort((a,b) => b.balance - a.balance);
-  window._lbPlayers = players;
+  window._lbPlayersVal = players;
   if (typeof renderLB === 'function') renderLB(players);
 });
 
@@ -988,6 +992,7 @@ async function autoLogin(username){
 }
 
 function enterCasino(){
+  localStorage.setItem('casino_user', JSON.stringify(U));
   document.getElementById('cnav').style.display='flex';
   document.getElementById('nav-u').textContent=U.name;
   document.getElementById('lb-me-name').textContent=U.name;
@@ -997,12 +1002,17 @@ function enterCasino(){
   if(window._lbPlayers)renderLB(window._lbPlayers);
 }
 
-function doLogout(){U=null;showScr('auth');document.getElementById('cnav').style.display='none';}
+function doLogout(){U=null;localStorage.removeItem('casino_user');showScr('auth');document.getElementById('cnav').style.display='none';}
 
 window.addEventListener('DOMContentLoaded',()=>{
+  slInitDrums();
   const hubUser=sessionStorage.getItem('hub_chat_user');
   if(hubUser) autoLogin(hubUser);
-  slInitDrums();
+  else {
+    // Si ya hay datos en localStorage de sesión previa, intentar recuperar
+    const savedUser=localStorage.getItem('casino_user');
+    if(savedUser){try{U=JSON.parse(savedUser);enterCasino();}catch(e){}}
+  }
 });
 
 // ── NAV ─────────────────────────────────────────────────
@@ -1137,13 +1147,14 @@ function animateReelTo(idx, targetAngle, duration, onDone) {
 }
 
 function slAdj(d) { slBet = Math.max(5, Math.min(500, slBet+d)); document.getElementById('sbd').textContent = '$'+slBet; }
-function slSetManual() { const v = parseInt(document.getElementById('sl-manual').value); if(!v||v<1)return; slBet=v; document.getElementById('sbd').textContent='$'+slBet; document.getElementById('sl-manual').value=''; }
+function slSetManual() { if(slSpinning)return; const v = parseInt(document.getElementById('sl-manual').value); if(!v||v<1)return; slBet=v; document.getElementById('sbd').textContent='$'+slBet; document.getElementById('sl-manual').value=''; }
 
 async function slSpin() {
   if (slSpinning || !U) return;
   if (!canBet(slBet)) { alert('⛔ Llegarías a más de -$300.'); return; }
   animateLever();
-  U.balance -= slBet;
+  const betSnapshot = slBet;
+  U.balance -= betSnapshot;
   updateBal(); save();
   slSpinning = true;
   document.getElementById('sl-spin').disabled = true;
@@ -1167,18 +1178,18 @@ async function slSpin() {
   let done = 0;
   const results = finalIdx.map((fi, i) => WHEEL_ORDER[i][fi]);
   finalAngles.forEach((target, i) => {
-    animateReelTo(i, target, durations[i], () => {
-      done++;
-      if (done === 3) {
-        slSpinning = false;
-        document.getElementById('sl-spin').disabled = false;
-        slShowResult(results);
-      }
+      animateReelTo(i, target, durations[i], () => {
+        done++;
+        if (done === 3) {
+          slSpinning = false;
+          document.getElementById('sl-spin').disabled = false;
+          slShowResult(results, betSnapshot);
+        }
+      });
     });
-  });
 }
 
-function slShowResult(res) {
+function slShowResult(res, slBet) {
   const k = res.join('');
   let mult = 0;
   if (k==='💎💎💎') mult=50;
@@ -1583,10 +1594,80 @@ function rouInit(){drawWheel();const g=document.getElementById('ng');g.innerHTML
 function drawWheel(){const c=document.getElementById('rc'),ctx=c.getContext('2d'),cx=96,cy=96,r=94,seg=Math.PI*2/37;RN.forEach((n,i)=>{ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,i*seg,(i+1)*seg);ctx.fillStyle=n===0?'#27ae60':REDS_R.has(n)?'#c0392b':'#111';ctx.fill();ctx.strokeStyle='#d4af37';ctx.lineWidth=.5;ctx.stroke();ctx.save();ctx.translate(cx,cy);ctx.rotate(i*seg+seg/2);ctx.fillStyle='#fff';ctx.font='bold 6px Lato';ctx.textAlign='center';ctx.fillText(n,r-13,3);ctx.restore();});}
 function rouSel(t,el){rouBT=t;document.querySelectorAll('.rb').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');document.getElementById('num-pick').style.display=t==='num'?'block':'none';}
 function rouAdj(d){rouBet=Math.max(5,Math.min(500,rouBet+d));document.getElementById('rbd').textContent='$'+rouBet;}
-function rouSetManual(){const v=parseInt(document.getElementById('rou-manual').value);if(!v||v<1)return;rouBet=v;document.getElementById('rbd').textContent='$'+rouBet;document.getElementById('rou-manual').value='';}
-function rouSpin(){if(rouSp||!rouBT||!U)return;if(rouBT==='num'&&rouBNum===null){document.getElementById('rr').textContent='Elige un número';return;}if(!canBet(rouBet)){alert('⛔ Llegarías a más de -$300.');return;}U.balance-=rouBet;updateBal();save();rouSp=true;document.getElementById('rou-go').disabled=true;document.getElementById('rr').textContent='';const si=Math.floor(Math.random()*37),wn=RN[si],sd=360/37,sa=si*sd+sd/2,nd=((90-sa+180)%360+360)%360,cur=((rouDeg%360)+360)%360;let delta=nd-cur;if(delta<=0)delta+=360;const td=rouDeg+delta+(5+Math.floor(Math.random()*5))*360;document.getElementById('rw').style.transition='transform 4s cubic-bezier(.17,.67,.12,1)';document.getElementById('rw').style.transform='rotate('+td+'deg)';rouDeg=td;setTimeout(()=>{rouRes(wn);rouSp=false;document.getElementById('rou-go').disabled=false;},4300);}
-function rouRes(n){const iR=REDS_R.has(n),iE=n>0&&n%2===0;let w=0,t=rouBT;if(t==='red'&&iR)w=rouBet;else if(t==='black'&&!iR&&n>0)w=rouBet;else if(t==='even'&&iE)w=rouBet;else if(t==='odd'&&!iE&&n>0)w=rouBet;else if(t==='low'&&n>=1&&n<=18)w=rouBet;else if(t==='high'&&n>=19&&n<=36)w=rouBet;else if(t==='doz1'&&n>=1&&n<=12)w=rouBet*2;else if(t==='doz2'&&n>=13&&n<=24)w=rouBet*2;else if(t==='doz3'&&n>=25&&n<=36)w=rouBet*2;else if(t==='num'&&n===rouBNum)w=rouBet*35;const lbs={red:'🔴 Rojo',black:'⚫ Negro',even:'Par',odd:'Impar',low:'1-18',high:'19-36',doz1:'1ª Doc',doz2:'2ª Doc',doz3:'3ª Doc',num:'¡Número!'};const rr=document.getElementById('rr');if(w>0){U.balance+=rouBet+w;updateBal();save();rr.style.color='#d4af37';rr.textContent='Salió '+n+' · '+lbs[t]+' · +$'+w;}else{rr.style.color=REDS_R.has(n)?'#e74c3c':'#fff';rr.textContent='Salió '+n+' · Sin premio';}}
+function rouSetManual(){if(rouSp)return;const v=parseInt(document.getElementById('rou-manual').value);if(!v||v<1)return;rouBet=v;document.getElementById('rbd').textContent='$'+rouBet;document.getElementById('rou-manual').value='';}
+function rouSpin(){
+  if(rouSp||!rouBT||!U)return;
+  if(rouBT==='num'&&rouBNum===null){document.getElementById('rr').textContent='Elige un número';return;}
+  if(!canBet(rouBet)){alert('⛔ Llegarías a más de -$300.');return;}
+  const betSnapshot=rouBet;
+  U.balance-=betSnapshot;updateBal();save();
+  rouSp=true;
+  document.getElementById('rou-go').disabled=true;
+  document.getElementById('rr').textContent='';
 
+  // Elegir segmento ganador
+  const si=Math.floor(Math.random()*37);
+  const wn=RN[si];
+  const sd=360/37;
+
+  // El centro del segmento si está en: si * sd + sd/2 grados desde la posición 0 del canvas
+  // Para que ese segmento quede bajo el puntero (arriba = 270° en coordenadas estándar),
+  // necesitamos rotar la rueda de modo que: rotación + si*sd + sd/2 = 270°
+  // => rotación_nueva = 270 - (si*sd + sd/2)
+  const segCenter = si * sd + sd/2;
+  const targetFinal = 270 - segCenter;
+
+  // Calculamos cuánto hay que girar desde rouDeg actual
+  const cur = rouDeg % 360;
+  let delta = (targetFinal - cur % 360 + 360) % 360;
+  if(delta < 10) delta += 360; // mínimo una vuelta extra
+  const td = rouDeg + delta + (5 + Math.floor(Math.random()*5)) * 360;
+
+  const wheel = document.getElementById('rw');
+  wheel.style.transition = 'none';
+  wheel.style.transform = 'rotate('+rouDeg+'deg)';
+  // Forzar reflow antes de aplicar la transición
+  wheel.getBoundingClientRect();
+  wheel.style.transition = 'transform 4s cubic-bezier(.17,.67,.12,1)';
+  wheel.style.transform = 'rotate('+td+'deg)';
+  rouDeg = td;
+
+  setTimeout(()=>{
+    rouRes(wn, betSnapshot);
+    rouSp=false;
+    document.getElementById('rou-go').disabled=false;
+  }, 4400);
+}
+
+function rouRes(n, bet){
+  const iR=REDS_R.has(n), iE=n>0&&n%2===0;
+  let w=0, t=rouBT;
+  if(t==='red'&&iR) w=bet;
+  else if(t==='black'&&!iR&&n>0) w=bet;
+  else if(t==='even'&&iE) w=bet;
+  else if(t==='odd'&&!iE&&n>0) w=bet;
+  else if(t==='low'&&n>=1&&n<=18) w=bet;
+  else if(t==='high'&&n>=19&&n<=36) w=bet;
+  else if(t==='doz1'&&n>=1&&n<=12) w=bet*2;
+  else if(t==='doz2'&&n>=13&&n<=24) w=bet*2;
+  else if(t==='doz3'&&n>=25&&n<=36) w=bet*2;
+  else if(t==='num'&&n===rouBNum) w=bet*35;
+
+  const lbs={red:'🔴 Rojo',black:'⚫ Negro',even:'Par',odd:'Impar',low:'1-18',
+             high:'19-36',doz1:'1ª Doc',doz2:'2ª Doc',doz3:'3ª Doc',num:'¡Número!'};
+  const numColor = n===0 ? '#27ae60' : REDS_R.has(n) ? '#e74c3c' : '#fff';
+  const rr = document.getElementById('rr');
+
+  if(w>0){
+    U.balance += bet + w;
+    updateBal(); save();
+    rr.style.color = '#d4af37';
+    rr.textContent = '🎯 Salió ' + n + ' · ' + lbs[t] + ' · +$' + w;
+  } else {
+    rr.style.color = numColor;
+    rr.textContent = 'Salió ' + n + (n===0?' 🟢':REDS_R.has(n)?' 🔴':' ⚫') + ' · Sin premio';
+  }
+}
 // ── MONOPOLY ─────────────────────────────────────────────
 const MSP=[{name:'Salida',t:'go'},{name:'Mediterráneo',t:'prop',col:'#8B4513',pr:60,re:2},{name:'Caja Comunidad',t:'cc'},{name:'Báltico',t:'prop',col:'#8B4513',pr:60,re:4},{name:'Impuesto Renta',t:'tax',am:200},{name:'Estación Kings Cross',t:'sta',pr:200,re:25},{name:'Oriental',t:'prop',col:'#87CEEB',pr:100,re:6},{name:'Azar',t:'ch'},{name:'Vermont',t:'prop',col:'#87CEEB',pr:100,re:6},{name:'Connecticut',t:'prop',col:'#87CEEB',pr:120,re:8},{name:'Cárcel',t:'jail'},{name:'St. Charles',t:'prop',col:'#FF69B4',pr:140,re:10},{name:'Cía Eléctrica',t:'util',pr:150,re:0},{name:'States',t:'prop',col:'#FF69B4',pr:140,re:10},{name:'Virginia',t:'prop',col:'#FF69B4',pr:160,re:12},{name:'Estación Pennsylvania',t:'sta',pr:200,re:25},{name:'St. James',t:'prop',col:'#FFA500',pr:180,re:14},{name:'Caja Comunidad',t:'cc'},{name:'Tennessee',t:'prop',col:'#FFA500',pr:180,re:14},{name:'Nueva York',t:'prop',col:'#FFA500',pr:200,re:16},{name:'Parking Gratis',t:'free'},{name:'Kentucky',t:'prop',col:'#e74c3c',pr:220,re:18},{name:'Azar',t:'ch'},{name:'Indiana',t:'prop',col:'#e74c3c',pr:220,re:18},{name:'Illinois',t:'prop',col:'#e74c3c',pr:240,re:20},{name:'Estación B&O',t:'sta',pr:200,re:25},{name:'Atlantic',t:'prop',col:'#FFFF00',pr:260,re:22},{name:'Ventnor',t:'prop',col:'#FFFF00',pr:260,re:22},{name:'Cía Agua',t:'util',pr:150,re:0},{name:'Marvin Gardens',t:'prop',col:'#FFFF00',pr:280,re:24},{name:'Ir a la Cárcel',t:'gtj'},{name:'Pacific',t:'prop',col:'#008000',pr:300,re:26},{name:'Carolina N.',t:'prop',col:'#008000',pr:300,re:26},{name:'Caja Comunidad',t:'cc'},{name:'Pennsylvania',t:'prop',col:'#008000',pr:320,re:28},{name:'Estación Short Line',t:'sta',pr:200,re:25},{name:'Azar',t:'ch'},{name:'Park Place',t:'prop',col:'#00008B',pr:350,re:35},{name:'Impuesto Lujo',t:'tax',am:100},{name:'Bulevar',t:'prop',col:'#00008B',pr:400,re:50}];
 const CHANCE=['¡Avanza a Salida! +$200','Multa de tráfico -$15','Banco paga dividendos +$50','Vence préstamo -$150','Premio belleza +$10','Avanza a la estación más cercana','Ir directamente a la cárcel','Premio lotería +$100'];
@@ -1694,14 +1775,14 @@ function playWinSound(){
       document.getElementById('lbt-money').classList.toggle('act', tab === 'money');
       document.getElementById('lbt-garage').classList.toggle('act', tab === 'garage');
       document.getElementById('lb-sort-row').style.display = tab === 'garage' ? 'flex' : 'none';
-      if (window._lbPlayers) renderLB(window._lbPlayers);
+      if(window._lbPlayersVal) renderLB(window._lbPlayersVal);
     }
 
     function lbSetSort(sort) {
       _lbSort = sort;
       document.getElementById('lbs-val').classList.toggle('act', sort === 'val');
       document.getElementById('lbs-num').classList.toggle('act', sort === 'num');
-      if (window._lbPlayers) renderLB(window._lbPlayers);
+      if(window._lbPlayersVal) renderLB(window._lbPlayersVal);
     }
 
     // Sobreescribimos renderLB para soportar ambos modos
@@ -1818,21 +1899,6 @@ function playWinSound(){
     // Parchamos onValue para que los datos de garaje lleguen al ranking
     // Sobreescribe el listener original añadiendo garageIds a cada player
     window._lbGarageData = {};
-    (function patchLBListener() {
-      const origOnValue = window._lbOnValue;
-      // Interceptamos los datos que llegan de Firebase para añadir garageIds
-      const _origRenderLBRef = window._lbPlayers;
-      // Monkey-patch: cuando Firebase actualice _lbPlayers, rellenamos garageIds
-      Object.defineProperty(window, '_lbPlayers', {
-        get() { return this._lbPlayersVal || []; },
-        set(val) {
-          // val viene de onValue -> ya tiene garageIds si se guardaron con el nuevo _saveLB
-          this._lbPlayersVal = val;
-          if (typeof renderLB === 'function') renderLB(val);
-        },
-        configurable: true
-      });
-    })();
 </script>
 </body>
 </html>
