@@ -556,9 +556,21 @@ body{font-family:'Lato',sans-serif;background:#0a0a0f;color:#fff}
           <div class="lb-title">🏆 Ranking</div>
           <div class="lb-sub">Top jugadores · En vivo</div>
         </div>
+        <!-- TABS -->
+        <div class="lb-tabs">
+          <button class="lb-tab act" id="lbt-money" onclick="lbSetTab('money')">💰 Capital</button>
+          <button class="lb-tab" id="lbt-garage" onclick="lbSetTab('garage')">🏎️ Garaje</button>
+        </div>
+        <!-- Sort (solo visible en tab garaje) -->
+        <div class="lb-sort" id="lb-sort-row" style="display:none">
+          <button class="lb-sort-btn act" id="lbs-val" onclick="lbSetSort('val')">$ Valor</button>
+          <button class="lb-sort-btn" id="lbs-num" onclick="lbSetSort('num')">Nº Coches</button>
+        </div>
+        <!-- Scroll dinámico -->
         <div class="lb-scroll" id="lb-scroll">
           <div style="padding:20px;text-align:center;color:#333;font-size:11px;letter-spacing:1px">Conectando...</div>
         </div>
+        <!-- Mi posición fija abajo -->
         <div class="lb-me-fixed">
           <div class="lb-me-rank" id="lb-me-rank">#-</div>
           <div class="lb-me-info">
@@ -1653,6 +1665,174 @@ function playWinSound(){
     });
   }, 200 + notes.length*120);
 }
+    // ── RANKING TABS & GARAGE LB ─────────────────────────────
+    let _lbTab = 'money';   // 'money' | 'garage'
+    let _lbSort = 'val';    // 'val' | 'num'
+
+    // Datos de garaje de todos los jugadores (guardado en Firebase leaderboard)
+    // Guardamos junto con el balance: { balance, garageIds:[], ts }
+    // Parchamos _saveLB para incluir datos de garaje
+    const _origSaveLB = window._saveLB;
+    window._saveLB = function(name, balance) {
+      if (!name) return;
+      const garageIds = (U && U.garage) ? U.garage : [];
+      const tokens    = (U && U.tokens) ? U.tokens : [];
+      const { ref, set, getDatabase } = window._fbRefs || {};
+      // Usamos la misma referencia Firebase que ya existe
+      if (window._fbCasinoReady) {
+        import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js").then(m => {
+          const db2 = m.getDatabase();
+          m.set(m.ref(db2, 'casino/leaderboard/' + name), {
+            balance, garageIds, ts: Date.now()
+          });
+        });
+      }
+    };
+
+    function lbSetTab(tab) {
+      _lbTab = tab;
+      document.getElementById('lbt-money').classList.toggle('act', tab === 'money');
+      document.getElementById('lbt-garage').classList.toggle('act', tab === 'garage');
+      document.getElementById('lb-sort-row').style.display = tab === 'garage' ? 'flex' : 'none';
+      if (window._lbPlayers) renderLB(window._lbPlayers);
+    }
+
+    function lbSetSort(sort) {
+      _lbSort = sort;
+      document.getElementById('lbs-val').classList.toggle('act', sort === 'val');
+      document.getElementById('lbs-num').classList.toggle('act', sort === 'num');
+      if (window._lbPlayers) renderLB(window._lbPlayers);
+    }
+
+    // Sobreescribimos renderLB para soportar ambos modos
+    function renderLB(players) {
+      window._lbPlayers = players;
+      if (_lbTab === 'money') renderLBMoney(players);
+      else renderLBGarage(players);
+    }
+
+    function renderLBMoney(players) {
+      const scroll = document.getElementById('lb-scroll');
+      if (!scroll) return;
+      const myName = U ? U.name : null;
+      const medals = ['🥇','🥈','🥉'];
+      if (!players.length) {
+        scroll.innerHTML = '<div style="padding:24px;text-align:center;color:#333;font-size:11px">Sin jugadores aún</div>';
+        return;
+      }
+      scroll.innerHTML = players.map((p, i) => {
+        const isMe = p.name === myName;
+        const balClass = p.balance < 0 ? 'dn' : p.balance > 500 ? 'up' : 'eq';
+        const sign = p.balance >= 0 ? '+$' : '-$';
+        const posEl = i < 3
+          ? `<span class="lb-pos" style="font-size:18px">${medals[i]}</span>`
+          : `<span class="lb-pos pn">#${i+1}</span>`;
+        return `
+          <div class="lb-row${isMe?' is-me':''}">
+            ${posEl}
+            <div class="lb-info">
+              <div class="lb-name${isMe?' me':''}">${isMe?'⭐ ':''}${p.name}</div>
+              <div class="lb-bal ${balClass}">${sign}${Math.abs(p.balance).toLocaleString()}</div>
+            </div>
+          </div>
+          ${i===2&&players.length>3?'<div class="lb-sep"></div>':''}
+        `;
+      }).join('');
+      _updateMeFixed(players, p => ({ rank: players.indexOf(p), label: (p.balance>=0?'+$':'-$')+Math.abs(p.balance).toLocaleString(), color: p.balance<0?'#e74c3c':p.balance>500?'#27ae60':'#888' }));
+    }
+
+    function renderLBGarage(rawPlayers) {
+      const scroll = document.getElementById('lb-scroll');
+      if (!scroll) return;
+      const myName = U ? U.name : null;
+      const medals = ['🥇','🥈','🥉'];
+
+      // Enriquecer con datos de garaje
+      const enriched = rawPlayers.map(p => {
+        const ids = p.garageIds || [];
+        const cars = ids.map(id => CARS.find(c => c.id === id)).filter(Boolean);
+        const totalVal = cars.reduce((s, c) => s + c.price, 0);
+        const bestCar = cars.sort((a,b) => b.price - a.price)[0] || null;
+        return { ...p, cars, totalVal, numCars: cars.length, bestCar };
+      });
+
+      // Ordenar según criterio
+      if (_lbSort === 'val') enriched.sort((a,b) => b.totalVal - a.totalVal);
+      else enriched.sort((a,b) => b.numCars - a.numCars);
+
+      if (!enriched.length) {
+        scroll.innerHTML = '<div style="padding:24px;text-align:center;color:#333;font-size:11px">Sin datos aún</div>';
+        return;
+      }
+
+      scroll.innerHTML = enriched.map((p, i) => {
+        const isMe = p.name === myName;
+        const posEl = i < 3
+          ? `<span class="lb-gr-pos" style="font-size:16px">${medals[i]}</span>`
+          : `<span class="lb-gr-pos" style="color:#444;font-size:10px">#${i+1}</span>`;
+        const imgEl = p.bestCar
+          ? `<img class="lb-gr-img" src="${p.bestCar.img}" alt="${p.bestCar.name}" onerror="this.outerHTML='<div class=\'lb-gr-img-ph\'>🏎️</div>'">`
+          : `<div class="lb-gr-img-ph">🚗</div>`;
+        return `
+          <div class="lb-gr-row${isMe?' is-me':''}">
+            ${posEl}
+            ${imgEl}
+            <div class="lb-gr-data">
+              <div class="lb-gr-name${isMe?' me':''}">${isMe?'⭐ ':''}${p.name}</div>
+              <div class="lb-gr-val">$${p.totalVal.toLocaleString()}</div>
+              <div class="lb-gr-cars">${p.numCars} coche${p.numCars!==1?'s':''}${p.bestCar?' · '+p.bestCar.name:''}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const myIdx = enriched.findIndex(p => p.name === myName);
+      const rankEl = document.getElementById('lb-me-rank');
+      const nameEl = document.getElementById('lb-me-name');
+      const balEl  = document.getElementById('lb-me-bal');
+      if (!rankEl) return;
+      if (myIdx === -1) { rankEl.textContent='#-'; return; }
+      rankEl.textContent = myIdx < 3 ? medals[myIdx] : '#'+(myIdx+1);
+      nameEl.textContent = myName;
+      const me = enriched[myIdx];
+      balEl.textContent = me.numCars+' coches · $'+me.totalVal.toLocaleString();
+      balEl.style.color = '#d4af37';
+    }
+
+    function _updateMeFixed(players, fn) {
+      const myName = U ? U.name : null;
+      const medals = ['🥇','🥈','🥉'];
+      const idx = players.findIndex(p => p.name === myName);
+      const rankEl = document.getElementById('lb-me-rank');
+      const nameEl = document.getElementById('lb-me-name');
+      const balEl  = document.getElementById('lb-me-bal');
+      if (!rankEl) return;
+      if (idx === -1) { rankEl.textContent='#-'; nameEl.textContent=myName||'—'; balEl.textContent=''; return; }
+      rankEl.textContent = idx < 3 ? medals[idx] : '#'+(idx+1);
+      nameEl.textContent = myName;
+      const info = fn(players[idx]);
+      balEl.textContent = info.label;
+      balEl.style.color = info.color;
+    }
+
+    // Parchamos onValue para que los datos de garaje lleguen al ranking
+    // Sobreescribe el listener original añadiendo garageIds a cada player
+    window._lbGarageData = {};
+    (function patchLBListener() {
+      const origOnValue = window._lbOnValue;
+      // Interceptamos los datos que llegan de Firebase para añadir garageIds
+      const _origRenderLBRef = window._lbPlayers;
+      // Monkey-patch: cuando Firebase actualice _lbPlayers, rellenamos garageIds
+      Object.defineProperty(window, '_lbPlayers', {
+        get() { return this._lbPlayersVal || []; },
+        set(val) {
+          // val viene de onValue -> ya tiene garageIds si se guardaron con el nuevo _saveLB
+          this._lbPlayersVal = val;
+          if (typeof renderLB === 'function') renderLB(val);
+        },
+        configurable: true
+      });
+    })();
 </script>
 </body>
 </html>
