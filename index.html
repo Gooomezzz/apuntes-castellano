@@ -143,6 +143,12 @@
       <div style="margin-top:1.25rem;text-align:center;font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--text-3);letter-spacing:0.08em">
         <span id="authSwitchText">¿No tienes cuenta?</span> <a onclick="toggleAuthMode()" style="color:var(--accent);cursor:pointer"><span id="authSwitchLink">Regístrate</span></a>
       </div>
+      <div style="margin-top:0.75rem;text-align:center">
+        <button onclick="if(confirm('¿Seguro? No podrás chatear ni guardar nada.')) document.getElementById('authModal').style.display='none'"
+          style="background:none;border:none;color:var(--text-3);font-family:'Syne Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;cursor:pointer;text-decoration:underline">
+          Continuar sin cuenta
+        </button>
+      </div>
     </div>
   </div>
 
@@ -628,6 +634,10 @@
           window._renderChannels(window._getCurrentChannels());
         }
       }, 300);
+
+      if (!sessionStorage.getItem('hub_chat_user')) {
+      setTimeout(() => openAuth(), 400);
+      }
     }
 
     let typed = "", resetTimer = null;
@@ -963,7 +973,14 @@
       if (!e.target.closest('[data-ctx]')) closeCtxMenu();
     });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { closeGame(); closeCtxMenu(); document.getElementById('authModal').style.display='none'; }
+      if (e.key === 'Escape') {
+        closeGame();
+        closeCtxMenu();
+        // Solo cerrar el auth modal si ya estás logueado
+        if (sessionStorage.getItem('hub_chat_user')) {
+          document.getElementById('authModal').style.display = 'none';
+        }
+      }
     });
 
     // ── Typing indicator helpers (llamados desde Firebase module via window) ──
