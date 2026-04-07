@@ -2307,7 +2307,34 @@ window.closeYT = function() {
         bar.textContent = others[0].name + ' is typing…';
       });
     }
-    
+        // ── CARGAR JUEGOS DE GAMEPIX (AJUSTADO A TU RENDER) ──
+    const GPX_SID = "S55AA"; 
+    const gamepixUrl = `https://feeds.gamepix.com/v2/json/?order=quality&page=1&pagination=24&sid=${GPX_SID}`;
+
+    fetch(gamepixUrl)
+      .then(response => response.json())
+      .then(data => {
+        // Convertimos los juegos de GamePix al formato de TU función renderHtmlGames
+        const gpxGames = data.items.map(item => ({
+          name: item.title,
+          url: item.url,
+          thumb: item.banner_image, // Usamos 'thumb' porque es lo que pide tu código
+          key: null // Ponemos null para que NO salga el botón de borrar (X) en estos juegos
+        }));
+
+        // Si no existe la lista de juegos todavía, la creamos
+        if (!window._games) window._games = { html: [] };
+
+        // Juntamos tus juegos de Firebase con los de GamePix
+        window._games.html = [...(window._games.html || []), ...gpxGames];
+
+        // ¡IMPORTANTE! Llamamos a TU función para que los pinte ahora que ya los tenemos
+        if (typeof renderHtmlGames === 'function') {
+          renderHtmlGames();
+        }
+      })
+      .catch(err => console.error("Error cargando GamePix:", err));
+
   </script>
   <!-- POLL MODAL -->
   <div id="pollModal" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center">
