@@ -1492,12 +1492,6 @@ window.closeYT = function() {
     let bannedUsers = new Set();
 
     // ── Juegos desde Firebase ──
-    onValue(ref(db, 'games/html'), snap => {
-      window._games.html = snap.val()
-        ? Object.entries(snap.val()).map(([k,v]) => ({...v, key:k}))
-        : [...DEFAULT_GAMES.html];
-      renderAll();
-    });
 
     onValue(ref(db, 'yt_key'), snap => {
     if (snap.val()) window._ytKey = snap.val();
@@ -2307,33 +2301,57 @@ window.closeYT = function() {
         bar.textContent = others[0].name + ' is typing…';
       });
     }
-        // ── CARGAR JUEGOS DE GAMEPIX (AJUSTADO A TU RENDER) ──
-    const GPX_SID = "S55AA"; 
-    const gamepixUrl = `https://feeds.gamepix.com/v2/json/?order=quality&page=1&pagination=24&sid=${GPX_SID}`;
+   // ── JUEGOS DEL JSON LOCAL (se cargan después de Firebase, ordenados A-Z al final) ──
+const JSON_GAMES_URL = 'json'; // Cambia esto por la ruta real de tu archivo JSON
 
-    fetch(gamepixUrl)
-      .then(response => response.json())
-      .then(data => {
-        // Convertimos los juegos de GamePix al formato de TU función renderHtmlGames
-        const gpxGames = data.items.map(item => ({
-          name: item.title,
-          url: item.url,
-          thumb: item.banner_image, // Usamos 'thumb' porque es lo que pide tu código
-          key: null // Ponemos null para que NO salga el botón de borrar (X) en estos juegos
-        }));
+async function loadLocalJsonGames() {
+  try {
+    const response = await fetch(JSON_GAMES_URL);
+    const data = await response.json();
+    
+    const jsonGames = data.items.map(item => ({
+      name:  item.title,
+      url:   item.url,
+      thumb: item.banner_image,
+      key:   null,          // null = sin botón de borrar
+      _src:  'json'         // marcador para distinguirlos de Firebase
+    }));
 
-        // Si no existe la lista de juegos todavía, la creamos
-        if (!window._games) window._games = { html: [] };
+    // Ordenar los de Firebase A-Z
+    window._games._firebase = (window._games._firebase || window._games.html
+      .filter(g => g.key !== null))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
-        // Juntamos tus juegos de Firebase con los de GamePix
-        window._games.html = [...(window._games.html || []), ...gpxGames];
+    // Ordenar los del JSON A-Z
+    const jsonSorted = jsonGames.sort((a, b) => a.name.localeCompare(b.name));
 
-        // ¡IMPORTANTE! Llamamos a TU función para que los pinte ahora que ya los tenemos
-        if (typeof renderHtmlGames === 'function') {
-          renderHtmlGames();
-        }
-      })
-      .catch(err => console.error("Error cargando GamePix:", err));
+    // Combinar: Firebase primero, JSON después
+    window._games.html = [...window._games._firebase, ...jsonSorted];
+
+    if (typeof renderHtmlGames === 'function') renderHtmlGames();
+
+  } catch(err) {
+    console.error('Error cargando JSON local:', err);
+  }
+}
+
+// Escuchar Firebase y guardar los juegos "reales" aparte
+// (esto ya lo hace el onValue de arriba, pero añadimos el hook)
+const _origOnValue_games = window._games.html;
+onValue(ref(db, 'games/html'), snap => {
+  window._games._firebase = snap.val()
+    ? Object.entries(snap.val()).map(([k, v]) => ({ ...v, key: k })).sort((a, b) => a.name.localeCompare(b.name))
+    : [];
+
+  // Recombinar: Firebase A-Z + JSON A-Z (si ya cargaron)
+  const jsonGames = (window._games.html || []).filter(g => g._src === 'json');
+  window._games.html = [...window._games._firebase, ...jsonGames];
+  renderAll();
+});
+
+// Cargar el JSON al iniciar
+loadLocalJsonGames();
+
 
   </script>
   <!-- POLL MODAL -->
