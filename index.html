@@ -164,6 +164,37 @@
   background-position: center !important;
   display: block !important;
 }
+/* ── DM Panel estilo Discord ── */
+#tab-dms { background: var(--bg); }
+#dmPanelMessages { background: var(--bg); }
+#dmUserList::-webkit-scrollbar,
+#dmPanelMessages::-webkit-scrollbar,
+#groupList::-webkit-scrollbar { width: 3px; }
+#dmUserList::-webkit-scrollbar-thumb,
+#dmPanelMessages::-webkit-scrollbar-thumb,
+#groupList::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+
+/* Input de escribir mejorado */
+#dmPanelInputRow {
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 16px 16px;
+  background: var(--bg);
+}
+#dmPanelText {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: none;
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+  padding: 10px 16px;
+  outline: none;
+  transition: background 0.15s;
+}
+#dmPanelText:focus { background: rgba(255,255,255,0.09); }
+#dmPanelText::placeholder { color: var(--text-3); }
   </style>
 </head>
 <body>
@@ -190,7 +221,7 @@
         <input id="authPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()" style="background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.9rem;padding:0.4rem 0;outline:none;width:100%">
       </div>
       <div id="authError" style="color:var(--red);font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.06em;margin-top:0.5rem;text-align:center;min-height:1rem"></div>
-      <button id="authSubmitBtn" onclick="authSubmit()" style="width:100%;padding:0.6rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;margin-top:0.75rem">Sign In</button>
+      <button id="authSubmitBtn" onclick="authSubmit()" style="width:100%;padding:0.6rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;margin-top:0.75rem">Sign In</button>
       <div style="margin-top:1.25rem;text-align:center;font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--text-3);letter-spacing:0.08em">
         <span id="authSwitchText">Don't have an account?</span> <a onclick="toggleAuthMode()" style="color:var(--accent);cursor:pointer"><span id="authSwitchLink">Sign Up</span></a>
       </div>
@@ -234,6 +265,7 @@
     <div class="tabs-bar">
       <button class="tab-btn active" onclick="switchTab('html')">Games</button>
       <button class="tab-btn" onclick="switchTab('chat')">Chat</button>
+      <button class="tab-btn" onclick="switchTab('dms')" id="dmsTabBtn">💬 DMs</button>
       <button class="tab-btn" onclick="switchTab('yt')">YouTube</button>
       <button class="tab-btn" id="adminTabBtn" style="display:none;color:var(--gold)" onclick="switchTab('admin')">👑 Admin</button>
     </div>
@@ -250,58 +282,131 @@
 
     <!-- TAB: CHAT -->
     <div class="tab-panel" id="tab-chat">
-      <div style="display:flex;gap:0;border-top:1px solid var(--border);min-height:600px">
-        <!-- Sidebar canales -->
-        <div style="width:180px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column">
-          <div style="padding:0.75rem 1rem;font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-            Channels
-            <button id="btnAddChannel" onclick="promptAddChannel()" style="display:none;background:none;border:none;color:var(--accent);font-size:1rem;cursor:pointer;line-height:1">+</button>
+      <div style="display:flex;gap:0;border-top:1px solid var(--border);min-height:600px;background:var(--bg)">
+
+        <!-- Sidebar canales estilo Discord -->
+        <div style="width:200px;flex-shrink:0;background:#0d0d14;display:flex;flex-direction:column;border-right:1px solid var(--border)">
+          <div style="padding:0 1rem;height:48px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);box-shadow:0 1px 3px rgba(0,0,0,0.3)">
+            <span style="font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;color:var(--text);letter-spacing:0.02em">Game Hub</span>
+            <button id="btnAddChannel" onclick="promptAddChannel()" style="display:none;background:none;border:none;color:var(--text-3);font-size:1.1rem;cursor:pointer;line-height:1" onmouseenter="this.style.color='var(--text)'" onmouseleave="this.style.color='var(--text-3)'">+</button>
           </div>
-          <div id="channelList" style="flex:1;overflow-y:auto;padding:0.5rem 0"></div>
-        </div>
-        <!-- Centro mensajes -->
-        <div style="flex:1;display:flex;flex-direction:column;min-width:0">
-          <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border)">
-            <span style="font-family:'Syne Mono',monospace;font-size:0.65rem;color:var(--text-3)">#</span>
-            <span id="activeChannelName" style="font-family:'Syne Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;color:var(--text-2);flex:1">general</span>
-            <div id="chatUserBadge" style="display:none;font-family:'Syne Mono',monospace;font-size:0.62rem;color:var(--text-2);gap:0.5rem;align-items:center">
-              <strong id="chatUserName" style="color:var(--accent-2)"></strong>
-              <input id="avatarInput" type="file" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
-              <div id="avatarPreview" onclick="document.getElementById('avatarInput').click()" style="width:28px;height:28px;border-radius:50%;background:var(--border-hi);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:var(--text-3);border:1px solid var(--border-hi)">+</div>
-              <button onclick="fbLogout()" style="background:none;border:1px solid var(--border-hi);color:var(--text-3);font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.6rem;cursor:pointer">Sign Out</button>
+          <div style="padding:1rem 0.75rem 0.25rem;font-family:'Syne Mono',monospace;font-size:0.55rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3)">Text Channels</div>
+          <div id="channelList" style="flex:1;overflow-y:auto;padding:0 0.5rem 0.5rem"></div>
+          <div id="chatUserBadge" style="display:none;background:#0a0a11;border-top:1px solid rgba(255,255,255,0.06);padding:0.6rem 0.75rem;gap:0.5rem;align-items:center">
+            <input id="avatarInput" type="file" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+            <div id="avatarPreview" onclick="document.getElementById('avatarInput').click()" style="width:32px;height:32px;border-radius:50%;background:var(--accent);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:0.62rem;color:#fff;font-weight:700;font-family:'Syne Mono',monospace;flex-shrink:0;border:2px solid var(--border-hi)">+</div>
+            <div style="display:flex;flex-direction:column;min-width:0;flex:1">
+              <strong id="chatUserName" style="font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></strong>
+              <span style="font-family:'Syne Mono',monospace;font-size:0.52rem;color:#4ade80">&#9679; Online</span>
             </div>
+            <button onclick="fbLogout()" title="Sign Out" style="background:none;border:none;color:var(--text-3);font-size:0.9rem;cursor:pointer;padding:2px;flex-shrink:0" onmouseenter="this.style.color='var(--red)'" onmouseleave="this.style.color='var(--text-3)'">&#9211;</button>
           </div>
-          <div id="chatMessages" style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:0.6rem;height:460px;max-height:460px;position:relative" onscroll="checkScrollBtn('chatMessages','chatScrollBtn')">
+        </div>
+
+        <!-- Centro mensajes -->
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)">
+          <div style="display:flex;align-items:center;gap:0.6rem;padding:0 1rem;height:48px;border-bottom:1px solid rgba(255,255,255,0.06);box-shadow:0 1px 3px rgba(0,0,0,0.2);flex-shrink:0">
+            <span style="font-size:1rem;color:var(--text-3)">#</span>
+            <span id="activeChannelName" style="font-family:'Syne',sans-serif;font-size:0.88rem;font-weight:700;color:var(--text);flex:1">general</span>
+          </div>
+          <div id="chatMessages" style="flex:1;overflow-y:auto;padding:0.75rem 0;display:flex;flex-direction:column;gap:0.1rem;height:460px;max-height:460px;position:relative" onscroll="checkScrollBtn('chatMessages','chatScrollBtn')">
             <div id="chatEmpty" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;color:var(--text-3);font-family:'Syne Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase">
               <span>Sign in to chat</span>
-              <button onclick="openAuth()" style="font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem 1.25rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Sign In / Register</button>
+              <button onclick="openAuth()" style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem 1.25rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Sign In / Register</button>
             </div>
           </div>
-          <button id="chatScrollBtn" onclick="scrollToBottom('chatMessages')" style="display:none;position:absolute;bottom:1rem;right:1rem;z-index:10;background:var(--surface-2);border:1px solid var(--border-hi);color:var(--text-2);font-family:'Syne Mono',monospace;font-size:0.65rem;padding:0.4rem 0.75rem;cursor:pointer;border-radius:2px">↓ Jump to bottom</button>
-          <div id="chatTypingBar" style="display:none;padding:0.2rem 1.25rem;font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3);letter-spacing:0.06em;min-height:1.2rem;background:var(--surface)"></div>
-          <div id="chatInputRow" style="display:none;border-top:1px solid var(--border);background:var(--surface);gap:0.75rem;padding:0.85rem 1.25rem;flex-shrink:0">
+          <button id="chatScrollBtn" onclick="scrollToBottom('chatMessages')" style="display:none;position:absolute;bottom:5rem;right:1rem;z-index:10;background:var(--surface-2);border:1px solid var(--border-hi);color:var(--text-2);font-family:'Syne Mono',monospace;font-size:0.65rem;padding:0.4rem 0.75rem;cursor:pointer;border-radius:50px">&#8595;</button>
+          <div id="chatInputRow" style="display:none;padding:0.75rem 0.25rem 1rem;flex-shrink:0">
             <input id="imgInput" type="file" accept="image/*" style="display:none" onchange="sendImg(this)">
-            <button onclick="document.getElementById('imgInput').click()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;padding:0.3rem 0.6rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">📷</button>
-            <button onclick="openPollModal()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;padding:0.3rem 0.6rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">📊</button>
-            <input id="chatInput" type="text" placeholder="Type a message…" autocomplete="off"
-              onkeydown="if(event.key==='Enter')sendMsg()"
-              oninput="onChatTyping()"
-              style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);padding:0.3rem 0;font-family:'Syne',sans-serif;font-size:0.83rem;color:var(--text);outline:none;width:100%">
-            <button onclick="sendMsg()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.3rem 1rem;border:1px solid rgba(143,140,232,0.4);background:transparent;color:var(--accent);cursor:pointer">Send</button>
+            <div style="display:flex;align-items:center;background:rgba(255,255,255,0.07);border-radius:24px;width:100%; padding:0 0.75rem;gap:0.5rem;border:1px solid rgba(255,255,255,0.08)">
+              <button onclick="document.getElementById('imgInput').click()" style="background:none;border:none;color:var(--text-3);font-size:1rem;cursor:pointer;padding:0.7rem 0;flex-shrink:0" onmouseenter="this.style.color='var(--text)'" onmouseleave="this.style.color='var(--text-3)'">&#128247;</button>
+              <button onclick="openPollModal()" style="background:none;border:none;color:var(--text-3);font-size:1rem;cursor:pointer;padding:0.7rem 0;flex-shrink:0" onmouseenter="this.style.color='var(--text)'" onmouseleave="this.style.color='var(--text-3)'">&#128202;</button>
+              <input id="chatInput" type="text" placeholder="Message #general…" autocomplete="off"
+                onkeydown="if(event.key==='Enter')sendMsg()"
+                oninput="onChatTyping()"
+                style="flex:1;background:transparent;border:none;padding:0.8rem 0;font-family:'Syne',sans-serif;font-size:0.88rem;color:var(--text);outline:none;width:100%">
+              <button onclick="sendMsg()" style="background:none;border:none;color:var(--accent);font-size:1.15rem;cursor:pointer;padding:0.7rem 0;flex-shrink:0">&#10148;</button>
+            </div>
+            <div id="chatTypingBar" style="display:none;padding:0.3rem 0.25rem 0;font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3);letter-spacing:0.06em;min-height:1.2rem"></div>
           </div>
         </div>
-        <!-- Sidebar usuarios online -->
-        <div style="width:160px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column">
-          <div style="padding:0.75rem 1rem;font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.4rem">
-            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 5px #4ade80;flex-shrink:0"></span>
-            Online
-            <span id="onlineCount" style="margin-left:auto;font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-3)">0</span>
-          </div>
-          <div id="onlineUsers" style="flex:1;overflow-y:auto;padding:0.4rem 0"></div>
-        </div>
+
+
+
       </div>
     </div>
     <!-- FIN TAB CHAT -->
+
+    <!-- TAB: DMs -->
+<div class="tab-panel" id="tab-dms">
+  <div style="display:flex;gap:0;border-top:1px solid var(--border);min-height:600px">
+
+    <!-- Sidebar izquierdo: lista de usuarios -->
+    <div style="width:220px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)">
+      <div style="padding:0.75rem 1rem;font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Direct Messages</div>
+      <div style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--border)">
+        <input type="text" placeholder="🔍 Search user…" oninput="filterDMUsers(this.value)"
+          style="width:100%;background:var(--surface-2);border:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.75rem;padding:0.3rem 0.6rem;outline:none;border-radius:2px">
+      </div>
+      <div id="dmUserList" style="flex:1;overflow-y:auto"></div>
+
+      <!-- Sección Grupos -->
+      <div style="border-top:1px solid var(--border)">
+        <div style="padding:0.75rem 1rem;font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3);display:flex;align-items:center;justify-content:space-between">
+          Groups
+          <button onclick="openCreateGroupModal()" style="background:none;border:none;color:var(--accent);font-size:1rem;cursor:pointer;line-height:1;font-family:'Syne',sans-serif">+</button>
+        </div>
+        <div id="groupList" style="max-height:180px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <!-- Panel central: mensajes DM o grupo -->
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <!-- Cabecera -->
+      <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);background:var(--surface)">
+        <span id="dmPanelIcon" style="font-size:1rem">💬</span>
+        <span id="dmPanelTitle" style="font-family:'Syne Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;color:var(--text-2);flex:1;text-transform:uppercase">Select a conversation</span>
+      </div>
+      <!-- Mensajes -->
+      <div id="dmPanelMessages" style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:0.6rem;height:460px;max-height:460px">
+        <div id="dmPanelEmpty" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-family:'Syne Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase">
+          Select a user to start chatting
+        </div>
+      </div>
+      <!-- Typing bar -->
+      <div id="dmTypingBar" style="display:none;padding:0.2rem 1.25rem;font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3);letter-spacing:0.06em;min-height:1.2rem;background:var(--surface)"></div>
+      <!-- Input -->
+      <div id="dmPanelInputRow" style="display:none;border-top:1px solid var(--border);background:var(--surface);gap:0.75rem;padding:0.85rem 1.25rem;flex-shrink:0;align-items:center">
+        <input id="dmPanelText" type="text" placeholder="Private message…" autocomplete="off"
+          onkeydown="if(event.key==='Enter')sendDMPanel()"
+          oninput="onDMTyping()"
+          style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);padding:0.3rem 0;font-family:'Syne',sans-serif;font-size:0.83rem;color:var(--text);outline:none;width:100%">
+        <button onclick="sendDMPanel()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.3rem 1rem;border:1px solid rgba(143,140,232,0.4);background:transparent;color:var(--accent);cursor:pointer">Send</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- FIN TAB DMs -->
+
+<!-- MODAL CREAR GRUPO -->
+<div id="createGroupModal" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border-hi);padding:2rem;width:100%;max-width:400px;display:flex;flex-direction:column;gap:1rem">
+    <div style="font-family:'Cormorant',serif;font-weight:300;font-size:1.5rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text)">New Group</div>
+    <div style="display:flex;flex-direction:column;gap:0.4rem">
+      <span style="font-family:'Syne Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3)">Group name</span>
+      <input id="groupNameInput" type="text" placeholder="e.g. The Squad" style="background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.9rem;padding:0.4rem 0;outline:none;width:100%">
+    </div>
+    <div>
+      <span style="font-family:'Syne Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3)">Add members</span>
+      <div id="groupMemberList" style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.4rem;max-height:200px;overflow-y:auto"></div>
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+      <button onclick="document.getElementById('createGroupModal').style.display='none'" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid var(--border-hi);background:transparent;color:var(--text-3);cursor:pointer">Cancel</button>
+      <button onclick="submitCreateGroup()" style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:0.4rem 1rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Create</button>
+    </div>
+  </div>
+</div>
 
 
 
@@ -313,7 +418,7 @@
         <input id="ytSearch" type="text" placeholder="Search YouTube…" autocomplete="off" 
             onkeydown="if(event.key==='Enter')searchYT()"
             style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border-hi);color:var(--text);font-family:'Syne',sans-serif;font-size:0.9rem;padding:0.4rem 0;outline:none">
-        <button onclick="searchYT()" style="font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem 1.25rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Search</button>
+        <button onclick="searchYT()" style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:0.5rem 1.25rem;border:1px solid rgba(143,140,232,0.4);background:rgba(143,140,232,0.08);color:var(--accent);cursor:pointer">Search</button>
         </div>
         <div id="ytPlayer" style="display:none;margin-bottom:1.5rem">
         <iframe id="ytFrame" width="100%" height="480" frameborder="0" allowfullscreen
@@ -478,6 +583,7 @@
 
   <!-- ═══════════════════════════════════════════════════════ SCRIPTS ═══ -->
   <script>
+    
     // ── Encuestas ──
     window.openPollModal = () => {
       document.getElementById('pollModal').style.display = 'flex';
@@ -529,14 +635,14 @@
     // ── Groq key ──
     window.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem('groq_key')) {
-        document.getElementById('aiKeySetup').style.display = 'none';
+        const _aiks = document.getElementById('aiKeySetup'); if (_aiks) _aiks.style.display = 'none';
       }
     });
     function saveGroqKey() {
       const key = document.getElementById('groqKeyInput').value.trim();
       if (!key.startsWith('gsk_')) { showToast('⚠ Key inválida'); return; }
       localStorage.setItem('groq_key', key);
-      document.getElementById('aiKeySetup').style.display = 'none';
+      const _aiks = document.getElementById('aiKeySetup'); if (_aiks) _aiks.style.display = 'none';
       showToast('✓ Key guardada');
       location.reload();
     }
@@ -814,18 +920,18 @@ function renderLinks() {
     countTotalEl.textContent = totalLinks;
   }
 }
-    function launchGame(name, url) {
-      document.getElementById("gameTitle").textContent = name;
-      document.getElementById("gameFrame").src = url;
-      document.getElementById("gameModal").classList.add("show");
-    }
+      function launchGame(name, url) {
+        document.getElementById("gameTitle").textContent = name;
+        document.getElementById("gameFrame").src = url;
+        document.getElementById("gameModal").classList.add("show");
+      }
     function closeGame() {
       document.getElementById("gameModal").classList.remove("show");
       document.getElementById("gameFrame").src = "";
     }
 
     function switchTab(t) {
-      const tabs = ['html','chat','yt','admin'];
+      const tabs = ['html','chat','dms','yt','admin'];
       document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i] === t));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('tab-'+t).classList.add('active');
@@ -1008,6 +1114,7 @@ function renderLinks() {
       const me = window._fbAuth.currentUser.displayName || window._fbAuth.currentUser.email;
       const COLORS = ['#8f8ce8','#c9a84c','#4ade80','#e87070','#b8b5ff','#60a5fa'];
       const col = n => { let h=0; for(let c of n) h+=c.charCodeAt(0); return COLORS[h%COLORS.length]; };
+      const getDMKey = (a, b) => [a, b].sort().join('__');
       const key = getDMKey(me, currentDMUser);
       const { ref, push } = window._fbFns;
       await push(ref(window._fbDb, 'dms/' + key), { text, from: me, color: col(me), ts: Date.now() });
@@ -1485,11 +1592,22 @@ window.closeYT = function() {
     const COLORS = ['#8f8ce8','#c9a84c','#4ade80','#e87070','#b8b5ff','#60a5fa'];
     const ADMIN_USER = 'Gooomezzz';
     const col = n => { let h=0; for(let c of n) h+=c.charCodeAt(0); return COLORS[h%COLORS.length]; };
+    const getDMKey = (a, b) => [a, b].sort().join('__');
 
     let activeChannel = 'general';
     let currentChannels = [];
     let activeDMUser = null;
     let bannedUsers = new Set();
+
+        // ── DMs tab ──
+    let allDMUsers = [];
+    let dmUnread = {};        // { userName: count }
+    let dmLastSeen = {};      // { key: lastTs } — guardado en localStorage
+    let dmPanelListeners = {};
+
+    // Cargar lastSeen del localStorage
+    try { dmLastSeen = JSON.parse(localStorage.getItem('dm_last_seen') || '{}'); } catch(e) { dmLastSeen = {}; }
+    function saveDmLastSeen() { localStorage.setItem('dm_last_seen', JSON.stringify(dmLastSeen)); }
 
     // ── Juegos desde Firebase ──
 
@@ -1500,7 +1618,7 @@ window.closeYT = function() {
       if (snap.val()) {
         GROQ_KEY = snap.val();
         window._groqKey = snap.val();
-        document.getElementById('aiKeySetup').style.display = 'none';
+        const _aiks = document.getElementById('aiKeySetup'); if (_aiks) _aiks.style.display = 'none';
       }
     });
 
@@ -1548,8 +1666,10 @@ window.closeYT = function() {
       channels.forEach(ch => {
         const isActive = ch.id === activeChannel;
         const btn = document.createElement('div');
-        btn.style.cssText = `display:flex;align-items:center;gap:0.5rem;padding:0.4rem 1rem;cursor:pointer;font-family:'Syne Mono',monospace;font-size:0.65rem;letter-spacing:0.06em;color:${isActive?'var(--text)':'var(--text-3)'};background:${isActive?'rgba(143,140,232,0.08)':'transparent'};border-left:2px solid ${isActive?'var(--accent)':'transparent'}`;
-        btn.innerHTML = `<span style="color:var(--text-3)">#</span> ${ch.name}`;
+        btn.style.cssText = `display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0.6rem;cursor:pointer;border-radius:4px;margin-bottom:1px;color:${isActive?'var(--text)':'var(--text-3)'};background:${isActive?'rgba(143,140,232,0.15)':'transparent'};transition:background 0.1s,color 0.1s`;
+        btn.innerHTML = `<span style="font-size:0.85rem;opacity:0.7">#</span><span style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:${isActive?'600':'400'};letter-spacing:0.01em">${ch.name}</span>`;
+        btn.onmouseenter = () => { if (!isActive) { btn.style.background='rgba(255,255,255,0.05)'; btn.style.color='var(--text-2)'; } };
+        btn.onmouseleave = () => { if (!isActive) { btn.style.background='transparent'; btn.style.color='var(--text-3)'; } };
         btn.onclick = () => switchChannel(ch.id, ch.name);
         list.appendChild(btn);
       });
@@ -1558,7 +1678,7 @@ window.closeYT = function() {
     function renderPoll(d, pollId, channelId, myName) {
       const div = document.createElement('div');
       div.id = 'poll-' + pollId;
-      div.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;padding:0.75rem 1rem;background:var(--surface-2);border:1px solid var(--border-hi);max-width:400px;border-radius:2px';
+      div.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;padding:0.75rem 1rem;background:var(--surface-2);border:1px solid var(--border-hi);max-width:400px;border-radius:8px;margin:4px 12px';
 
       const header = document.createElement('div');
       header.style.cssText = "font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--text-3);letter-spacing:0.08em";
@@ -1917,19 +2037,19 @@ window.closeYT = function() {
         const isAdmin = d.name === ADMIN_USER;
         const div = document.createElement('div');
         div.setAttribute('data-ctx', '1');
-        div.style.cssText = `display:flex;gap:0.6rem;align-items:flex-start;${isOwn?'flex-direction:row-reverse':''}${isMention&&!isOwn?';background:rgba(201,168,76,0.07);border-left:2px solid var(--gold);padding-left:0.5rem;margin-left:-0.5rem':''}`;
+        div.style.cssText = `display:flex;gap:0.5rem;align-items:flex-start;padding:2px 10px;${isOwn?'flex-direction:row-reverse':''}${isMention&&!isOwn?';background:rgba(201,168,76,0.07);border-left:2px solid var(--gold)':''}`;
         if (!isOwn) {
           div.addEventListener('contextmenu', e => showCtxMenu(e, d.name, div, msgKey));
         }
         div.innerHTML = `
-          <div style="width:24px;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.8);flex-shrink:0;font-family:'Syne Mono',monospace;background:${d.color}">${d.avatar?`<img src="${d.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:2px">`:d.name.slice(0,2).toUpperCase()}</div>
-          <div style="display:flex;flex-direction:column;max-width:68%;${isOwn?'align-items:flex-end':''}">
-            <div style="display:flex;align-items:center;gap:0.4rem;${isOwn?'flex-direction:row-reverse':''}">
-              <span style="font-size:0.6rem;color:var(--text-2)">${d.name}</span>
-              ${isAdmin?'<span style="font-size:0.5rem;background:var(--gold);color:#000;padding:1px 5px;border-radius:2px;font-weight:700">👑 ADMIN</span>':''}
-            </div>
-            <div style="background:${isOwn?'rgba(143,140,232,0.1)':'var(--surface-2)'};border:1px solid ${isOwn?'rgba(143,140,232,0.25)':isMention&&!isOwn?'rgba(201,168,76,0.35)':'var(--border)'};padding:0.4rem 0.7rem;font-size:0.83rem;line-height:1.5;color:var(--text);word-break:break-word">${d.img?`<img src="${d.img}" onclick="openImg(this.src)" style="max-width:200px;max-height:200px;border-radius:4px;display:block;cursor:zoom-in">`:formatText(d.text, loggedName)}</div>
-            <div style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--text-2);margin-top:3px;opacity:0.7">${d.name} · ${relativeTime(d.ts)}</div>
+          <div style="position:relative;flex-shrink:0">
+            <div style="width:26px;height:26px;border-radius:50%;background:${d.color};display:flex;align-items:center;justify-content:center;font-size:0.5rem;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Syne Mono',monospace;overflow:hidden">${d.avatar?`<img src="${d.avatar}" style="width:100%;height:100%;object-fit:cover">`:d.name.slice(0,2).toUpperCase()}</div>
+            <span style="position:absolute;bottom:0;right:0;width:7px;height:7px;border-radius:50%;background:#4ade80;border:1.5px solid var(--bg)"></span>
+          </div>
+          <div style="display:flex;flex-direction:column;max-width:72%;${isOwn?'align-items:flex-end':''}">
+            ${!isOwn?`<div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:3px"><span style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;color:${d.color}">${d.name}</span>${isAdmin?'<span style="font-size:0.5rem;background:var(--gold);color:#000;padding:1px 5px;border-radius:2px;font-weight:700">👑 ADMIN</span>':''}</div>`:''}
+            <div style="background:${isOwn?'rgba(88,101,242,0.25)':'rgba(255,255,255,0.06)'};border-radius:${isOwn?'12px 3px 12px 12px':'3px 12px 12px 12px'};padding:5px 10px;font-size:0.9rem;line-height:1.45;color:var(--text);word-break:break-word;border:1px solid ${isOwn?'rgba(88,101,242,0.35)':isMention&&!isOwn?'rgba(201,168,76,0.35)':'rgba(255,255,255,0.06)'}">${d.img?`<img src="${d.img}" onclick="openImg(this.src)" style="max-width:200px;max-height:200px;border-radius:4px;display:block;cursor:zoom-in">`:formatText(d.text, loggedName)}</div>
+            <span style="font-family:'Syne Mono',monospace;font-size:0.5rem;color:var(--text-3);margin-top:3px;opacity:0.6">${d.name} · ${relativeTime(d.ts)}</span>
           </div>`;
         // Guardar en caché siempre
         if (!channelCache[channelId]) channelCache[channelId] = [];
@@ -2132,16 +2252,17 @@ window.closeYT = function() {
           users.forEach(ou => {
             const isMe = ou.name === name;
             const row = document.createElement('div');
-            row.style.cssText = `display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.75rem;cursor:${isMe?'default':'pointer'};transition:background 0.1s`;
-            row.onmouseenter = () => { if (!isMe) row.style.background = 'rgba(255,255,255,0.03)'; };
+            row.style.cssText = `display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0.5rem;cursor:${isMe?'default':'pointer'};border-radius:4px;transition:background 0.1s`;
+            row.onmouseenter = () => { if (!isMe) row.style.background = 'rgba(255,255,255,0.06)'; };
             row.onmouseleave = () => { row.style.background = 'transparent'; };
             row.innerHTML = `
               <div style="position:relative;flex-shrink:0">
-                <div style="width:28px;height:28px;border-radius:50%;background:${col(ou.name)};display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Syne Mono',monospace">${ou.name.slice(0,2).toUpperCase()}</div>
-                <span style="position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:#4ade80;border:1.5px solid var(--bg);box-shadow:0 0 5px #4ade80"></span>
+                <div style="width:30px;height:30px;border-radius:50%;background:${col(ou.name)};display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Syne Mono',monospace">${ou.name.slice(0,2).toUpperCase()}</div>
+                <span style="position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;background:#4ade80;border:2px solid #0d0d14"></span>
               </div>
               <div style="display:flex;flex-direction:column;min-width:0">
-                <span style="font-family:'Syne Mono',monospace;font-size:0.6rem;color:${isMe?'var(--accent)':'var(--text-2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:${isMe?'700':'400'}">${isMe?'Tú':ou.name}</span>
+                <span style="font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:600;color:${isMe?'var(--accent-2)':'var(--text-2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${isMe?'Tú (yo)':ou.name}</span>
+                <span style="font-family:'Syne Mono',monospace;font-size:0.5rem;color:#4ade80">online</span>
               </div>`;
             if (!isMe) row.onclick = () => { switchTab('dms'); setTimeout(() => openDMPanel(ou.name), 60); };
             container.appendChild(row);
@@ -2160,6 +2281,7 @@ window.closeYT = function() {
         if (!channelListeners[activeChannel]) switchChannel(activeChannel, document.getElementById('activeChannelName').textContent);
         loadDMUserList();
         window._openDMPanel = openDMPanel;
+
 
         // Escuchar kicks — si te kickean, hacer logout
         onValue(ref(db, 'kicks/' + name), snap => {
@@ -2180,6 +2302,254 @@ window.closeYT = function() {
         window._activeDMUser = null;
       }
     });
+    function renderDMUserList(q) {
+      const me = auth.currentUser?.displayName;
+      const container = document.getElementById('dmUserList');
+      if (!container || !me) return;
+      const filtered = q ? allDMUsers.filter(u => u.name.toLowerCase().includes(q)) : allDMUsers;
+      filtered.sort((a, b) => (dmUnread[b.name]||0) - (dmUnread[a.name]||0));
+      container.innerHTML = '';
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="padding:1rem 0.75rem;font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--text-3)">No users yet</div>`;
+        return;
+      }
+      filtered.forEach(u => {
+        const isActive = u.name === activeDMUser;
+        const unread = dmUnread[u.name] || 0;
+        const btn = document.createElement('div');
+        btn.style.cssText = `display:flex;align-items:center;gap:0.6rem;padding:0.55rem 1rem;cursor:pointer;border-left:2px solid ${isActive?'var(--accent)':unread?'var(--red)':'transparent'};background:${isActive?'rgba(143,140,232,0.08)':unread?'rgba(232,112,112,0.05)':'transparent'};transition:background 0.1s`;
+        btn.onmouseenter = () => { if(!isActive) btn.style.background='rgba(255,255,255,0.03)'; };
+        btn.onmouseleave = () => { if(!isActive) btn.style.background = unread?'rgba(232,112,112,0.05)':'transparent'; };
+        btn.innerHTML = `
+          <div style="position:relative;flex-shrink:0">
+            <div style="width:32px;height:32px;border-radius:50%;background:${col(u.name)};display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Syne Mono',monospace">${u.name.slice(0,2).toUpperCase()}</div>
+            ${unread?`<span style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#ed4245;color:#fff;font-size:0.5rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;font-family:'Syne Mono',monospace;border:2px solid var(--bg)">${unread>99?'99+':unread}</span>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;min-width:0;flex:1">
+            <span style="font-family:'Syne Mono',monospace;font-size:0.65rem;color:${isActive?'var(--text)':unread?'var(--text)':'var(--text-2)'};letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:${unread||isActive?'700':'400'}">${u.name}</span>
+            ${unread?`<span style="font-family:'Syne Mono',monospace;font-size:0.52rem;color:#ed4245">${unread} new</span>`:''}
+          </div>`;
+        btn.onclick = () => openDMPanel(u.name);
+        container.appendChild(btn);
+      });
+    }
+
+    window.filterDMUsers = (q) => renderDMUserList(q.toLowerCase().trim());
+            // ── loadDMUserList ──
+    function loadDMUserList() {
+      const me = auth.currentUser?.displayName;
+      if (!me) return;
+
+      // 1. Cargar lista de usuarios
+      onValue(ref(db, 'users'), snap => {
+        allDMUsers = snap.val()
+          ? Object.values(snap.val()).filter(u => u.name && u.name !== me)
+          : [];
+        renderDMUserList('');
+
+        // 2. Para cada usuario, escuchar sus DMs y contar no leídos
+        allDMUsers.forEach(u => {
+          const key = getDMKey(me, u.name);
+          onValue(ref(db, 'dms/' + key), snap2 => {
+            const msgs = snap2.val() ? Object.values(snap2.val()) : [];
+            const lastSeen = dmLastSeen[key] || 0;
+            dmUnread[u.name] = msgs.filter(m => m.ts > lastSeen && m.from !== me).length;
+            renderDMUserList('');
+            updateDMTabBadge();
+          });
+        });
+      });
+
+      // 3. Grupos — escuchar los que me incluyen
+      onValue(ref(db, 'groups'), snap => {
+        const data = snap.val() || {};
+        window._myGroups = Object.entries(data)
+          .map(([id, g]) => ({ id, ...g }))
+          .filter(g => Array.isArray(g.members) && g.members.includes(me));
+        renderGroupSidebar();
+      });
+    }
+
+    function updateDMTabBadge() {
+      const total = Object.values(dmUnread).reduce((a, b) => a + b, 0);
+      let badge = document.getElementById('dmsTabBadge');
+      const btn = document.getElementById('dmsTabBtn');
+      if (!btn) return;
+      if (total > 0) {
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.id = 'dmsTabBadge';
+          badge.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:8px;background:#ed4245;color:#fff;font-size:0.5rem;font-weight:700;padding:0 4px;margin-left:6px;font-family:"Syne Mono",monospace;line-height:1';
+          btn.appendChild(badge);
+        }
+        badge.textContent = total > 99 ? '99+' : total;
+      } else {
+        badge?.remove();
+      }
+    }
+
+    // ── openDMPanel (dentro del módulo, usa auth, db, col directamente) ──
+    function openDMPanel(otherUser) {
+      const me = auth.currentUser?.displayName;
+      if (!me || me === otherUser) return;
+
+      // Marcar como leído
+      const key = getDMKey(me, otherUser);
+      dmLastSeen[key] = Date.now();
+      saveDmLastSeen();
+      dmUnread[otherUser] = 0;
+      activeDMUser = otherUser;
+      window._activeDMUser = otherUser;
+      window._activeGroupId = null;
+      updateDMTabBadge();
+      renderDMUserList('');
+      renderGroupSidebar();
+
+      document.getElementById('dmPanelTitle').textContent = otherUser;
+      document.getElementById('dmPanelIcon').textContent = '💬';
+      const msgs = document.getElementById('dmPanelMessages');
+      if (msgs) msgs.innerHTML = '';
+      const _e1 = document.getElementById('dmPanelEmpty'); if (_e1) _e1.style.display = 'none';
+      const _r1 = document.getElementById('dmPanelInputRow'); if (_r1) _r1.style.display = 'flex';
+
+      if (!dmPanelListeners[key]) {
+        dmPanelListeners[key] = true;
+        if (!window._dmCache) window._dmCache = {};
+        window._dmCache[key] = [];
+        onChildAdded(ref(db, 'dms/' + key), snap => {
+          const d = snap.val();
+          if (!window._dmCache[key]) window._dmCache[key] = [];
+          window._dmCache[key].push(d);
+          if (activeDMUser === otherUser) {
+            renderOneDMMsg(document.getElementById('dmPanelMessages'), d, d.from === me);
+          }
+        });
+        listenDMTyping(key, me);
+      } else {
+        // Ya tiene listener: re-renderizar desde caché
+        if (!window._dmCache) window._dmCache = {};
+        (window._dmCache[key] || []).forEach(d => {
+          renderOneDMMsg(document.getElementById('dmPanelMessages'), d, d.from === me);
+        });
+      }
+    }
+    window._openDMPanel = openDMPanel;
+
+    // ── openGroupPanel ──
+    function openGroupPanel(groupId, groupName) {
+      const me = auth.currentUser?.displayName;
+      window._activeGroupId = groupId;
+      activeDMUser = null;
+      window._activeDMUser = null;
+      renderDMUserList('');
+      renderGroupSidebar();
+
+      document.getElementById('dmPanelTitle').textContent = groupName;
+      document.getElementById('dmPanelIcon').textContent = '👥';
+      const msgs = document.getElementById('dmPanelMessages');
+      if (msgs) msgs.innerHTML = '';
+      const _e2 = document.getElementById('dmPanelEmpty'); if (_e2) _e2.style.display = 'none';
+      const _r2 = document.getElementById('dmPanelInputRow'); if (_r2) _r2.style.display = 'flex';
+
+      if (!window._groupListeners) window._groupListeners = {};
+      if (!window._groupCache) window._groupCache = {};
+      if (!window._groupListeners[groupId]) {
+        window._groupListeners[groupId] = true;
+        window._groupCache[groupId] = [];
+        onChildAdded(ref(db, 'groupMessages/' + groupId), snap => {
+          const d = snap.val();
+          if (!window._groupCache[groupId]) window._groupCache[groupId] = [];
+          window._groupCache[groupId].push(d);
+          if (window._activeGroupId === groupId) {
+            renderOneDMMsg(document.getElementById('dmPanelMessages'), d, d.from === me);
+          }
+        });
+      } else {
+        // Ya tiene listener: re-renderizar desde caché
+        (window._groupCache[groupId] || []).forEach(d => {
+          renderOneDMMsg(document.getElementById('dmPanelMessages'), d, d.from === me);
+        });
+      }
+    }
+    window.openGroupPanel = openGroupPanel;
+
+    // ── renderGroupSidebar ──
+    function renderGroupSidebar() {
+      const container = document.getElementById('groupList');
+      if (!container) return;
+      const groups = window._myGroups || [];
+      container.innerHTML = '';
+      if (groups.length === 0) {
+        container.innerHTML = `<div style="padding:0.5rem 1rem;font-family:'Syne Mono',monospace;font-size:0.58rem;color:var(--text-3)">No groups yet</div>`;
+        return;
+      }
+      groups.forEach(g => {
+        const isActive = window._activeGroupId === g.id;
+        const row = document.createElement('div');
+        row.style.cssText = `display:flex;align-items:center;gap:0.6rem;padding:0.5rem 1rem;cursor:pointer;border-radius:6px;margin:2px 6px;border-left:2px solid ${isActive ? 'var(--accent)' : 'transparent'};background:${isActive ? 'rgba(143,140,232,0.12)' : 'transparent'};transition:background 0.1s`;
+        row.onmouseenter = () => { if (!isActive) row.style.background = 'rgba(255,255,255,0.04)'; };
+        row.onmouseleave = () => { if (!isActive) row.style.background = 'transparent'; };
+        row.innerHTML = `
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(143,140,232,0.2);display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0">👥</div>
+          <div style="display:flex;flex-direction:column;min-width:0;flex:1">
+            <span style="font-family:'Syne Mono',monospace;font-size:0.63rem;color:${isActive ? 'var(--text)' : 'var(--text-2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:${isActive ? '700' : '400'}">${g.name}</span>
+            <span style="font-family:'Syne Mono',monospace;font-size:0.52rem;color:var(--text-3)">${g.members?.length || 0} members</span>
+          </div>`;
+        row.onclick = () => openGroupPanel(g.id, g.name);
+        container.appendChild(row);
+      });
+    }
+
+    // ── renderOneDMMsg (estilo Discord) ──
+    function renderOneDMMsg(container, d, isOwn) {
+      const div = document.createElement('div');
+      div.style.cssText = `display:flex;gap:0.5rem;align-items:flex-start;padding:2px 10px;${isOwn ? 'flex-direction:row-reverse' : ''}`;
+      div.innerHTML = `
+        <div style="position:relative;flex-shrink:0">
+          <div style="width:26px;height:26px;border-radius:50%;background:${d.color || col(d.from || '?')};display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Syne Mono',monospace">${(d.from || '?').slice(0, 2).toUpperCase()}</div>
+          <span style="position:absolute;bottom:0;right:0;width:7px;height:7px;border-radius:50%;background:#4ade80;border:1.5px solid var(--bg)"></span>
+        </div>
+        <div style="display:flex;flex-direction:column;max-width:72%;${isOwn ? 'align-items:flex-end' : ''}">
+          ${!isOwn ? `<span style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;color:${d.color || col(d.from || '?')};margin-bottom:3px">${d.from}</span>` : ''}
+          <div style="background:${isOwn ? 'rgba(88,101,242,0.25)' : 'rgba(255,255,255,0.06)'};border-radius:${isOwn ? '16px 4px 16px 16px' : '4px 16px 16px 16px'};padding:5px 10px;font-size:0.78rem;line-height:1.45;color:var(--text);word-break:break-word;border:1px solid ${isOwn ? 'rgba(88,101,242,0.35)' : 'rgba(255,255,255,0.06)'}">${(d.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>
+          <span style="font-family:'Syne Mono',monospace;font-size:0.5rem;color:var(--text-3);margin-top:3px;opacity:0.6">${d.ts ? new Date(d.ts).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+        </div>`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // ── Crear grupo (desde modal) ──
+    window.openCreateGroupModal = () => {
+      const me = auth.currentUser?.displayName;
+      if (!me) { showToast('⚠ Sign in first'); return; }
+      document.getElementById('groupNameInput').value = '';
+      const list = document.getElementById('groupMemberList');
+      list.innerHTML = '';
+      allDMUsers.forEach(u => {
+        const label = document.createElement('label');
+        label.style.cssText = 'display:flex;align-items:center;gap:0.6rem;padding:0.35rem 0;cursor:pointer;font-family:"Syne",sans-serif;font-size:0.82rem;color:var(--text-2)';
+        const COLORS = ['#8f8ce8','#c9a84c','#4ade80','#e87070','#b8b5ff','#60a5fa'];
+        const c = n => { let h=0; for(let x of n) h+=x.charCodeAt(0); return COLORS[h%COLORS.length]; };
+        label.innerHTML = `
+          <input type="checkbox" value="${u.name}" style="accent-color:var(--accent);width:14px;height:14px">
+          <div style="width:26px;height:26px;border-radius:50%;background:${c(u.name)};display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;color:#fff;font-family:'Syne Mono',monospace;flex-shrink:0">${u.name.slice(0,2).toUpperCase()}</div>
+          ${u.name}`;
+        list.appendChild(label);
+      });
+      document.getElementById('createGroupModal').style.display = 'flex';
+    };
+
+    window.submitCreateGroup = async () => {
+      const name = document.getElementById('groupNameInput').value.trim();
+      const me = auth.currentUser?.displayName;
+      if (!name) { showToast('⚠ Write a group name'); return; }
+      const checked = [...document.querySelectorAll('#groupMemberList input:checked')].map(i => i.value);
+      if (checked.length === 0) { showToast('⚠ Select at least 1 member'); return; }
+      await push(ref(db, 'groups'), { name, members: [me, ...checked], createdBy: me, ts: Date.now() });
+      document.getElementById('createGroupModal').style.display = 'none';
+      showToast('✓ Group "' + name + '" created!');
+    };
+
 
     // ── Upload avatar ──
     window.uploadAvatar = async (input) => {
@@ -2217,64 +2587,28 @@ window.closeYT = function() {
       input.value = '';
     };
 
-    // ── DMs tab ──
-    let allDMUsers = [];
-    let dmUnread = {};        // { userName: count }
-    let dmLastSeen = {};      // { key: lastTs } — guardado en localStorage
-    let dmPanelListeners = {};
-
-    // Cargar lastSeen del localStorage
-    try { dmLastSeen = JSON.parse(localStorage.getItem('dm_last_seen') || '{}'); } catch(e) { dmLastSeen = {}; }
-    function saveDmLastSeen() { localStorage.setItem('dm_last_seen', JSON.stringify(dmLastSeen)); }
 
 
-    window.filterDMUsers = (q) => renderDMUserList(q.toLowerCase().trim());
-
-    function renderDMUserList(q) {
-      const container = document.getElementById('dmUserList');
-      if (!container) return;
-      const filtered = q ? allDMUsers.filter(u => u.name.toLowerCase().includes(q)) : allDMUsers;
-      // Ordenar: primero los que tienen mensajes sin leer
-      filtered.sort((a,b) => (dmUnread[b.name]||0) - (dmUnread[a.name]||0));
-      container.innerHTML = '';
-      if (filtered.length === 0) {
-        container.innerHTML = `<div style="padding:1rem 0.75rem;font-family:'Syne Mono',monospace;font-size:0.6rem;color:var(--text-3);letter-spacing:0.06em">${q ? 'No results found' : 'No users yet'}</div>`;
-        return;
-      }
-      filtered.forEach(u => {
-        const isActive = u.name === activeDMUser;
-        const unread = dmUnread[u.name] || 0;
-        const btn = document.createElement('div');
-        btn.style.cssText = `display:flex;align-items:center;gap:0.6rem;padding:0.55rem 1rem;cursor:pointer;border-left:2px solid ${isActive?'var(--accent)':unread?'var(--red)':'transparent'};background:${isActive?'rgba(143,140,232,0.08)':unread?'rgba(232,112,112,0.05)':'transparent'};transition:background 0.1s`;
-        btn.onmouseenter = () => { if (!isActive) btn.style.background='rgba(255,255,255,0.03)'; };
-        btn.onmouseleave = () => { if (!isActive) btn.style.background = unread ? 'rgba(232,112,112,0.05)' : 'transparent'; };
-        btn.innerHTML = `
-          <div style="position:relative;flex-shrink:0">
-            <div style="width:30px;height:30px;border-radius:50%;background:${col(u.name)};display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Syne Mono',monospace;border:2px solid ${isActive?'var(--accent)':unread?'var(--red)':'transparent'}">${u.name.slice(0,2).toUpperCase()}</div>
-            ${unread ? `<span style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--red);color:#fff;font-size:0.5rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;font-family:'Syne Mono',monospace;border:1px solid var(--bg)">${unread>99?'99+':unread}</span>` : ''}
-          </div>
-          <div style="display:flex;flex-direction:column;min-width:0;flex:1">
-            <span style="font-family:'Syne Mono',monospace;font-size:0.65rem;color:${isActive?'var(--text)':unread?'var(--text)':'var(--text-2)'};letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:${unread||isActive?'700':'400'}">${u.name}</span>
-            ${unread ? `<span style="font-family:'Syne Mono',monospace;font-size:0.55rem;color:var(--red);letter-spacing:0.04em">${unread} new</span>` : ''}
-          </div>`;
-        btn.onclick = () => openDMPanel(u.name);
-        container.appendChild(btn);
-      });
-    }
 
     
+    
 
+    // ── sendDMPanel — soporta DMs y grupos ──
     window.sendDMPanel = async () => {
       const input = document.getElementById('dmPanelText');
       const text = input.value.trim();
       const u = auth.currentUser;
-      if (!text || !u || !activeDMUser) return;
+      if (!text || !u) return;
       input.value = '';
       const me = u.displayName || u.email;
-      const key = getDMKey(me, activeDMUser);
-      // Limpiar typing al enviar
-      set(ref(db, 'typing/dm/' + key + '/' + me), null);
-      await push(ref(db, 'dms/' + key), { text, from: me, color: col(me), ts: Date.now() });
+      if (activeDMUser) set(ref(db, 'typing/dm/' + getDMKey(me, activeDMUser) + '/' + me), null);
+
+      if (window._activeGroupId) {
+        await push(ref(db, 'groupMessages/' + window._activeGroupId), { text, from: me, color: col(me), ts: Date.now() });
+      } else if (activeDMUser) {
+        const key = getDMKey(me, activeDMUser);
+        await push(ref(db, 'dms/' + key), { text, from: me, color: col(me), ts: Date.now() });
+      }
     };
 
     // ── Typing listeners ──
@@ -2302,36 +2636,32 @@ window.closeYT = function() {
       });
     }
    // ── JUEGOS DEL JSON LOCAL (se cargan después de Firebase, ordenados A-Z al final) ──
-const JSON_GAMES_URL = 'json'; // Cambia esto por la ruta real de tu archivo JSON
+   
+const JSON_GAMES_URL = './json.json';
+const COVER_BASE = 'https://cdn.jsdelivr.net/gh/gn-math/covers@main';
+const HTML_BASE  = 'https://gn-math.github.io/html';
 
 async function loadLocalJsonGames() {
   try {
     const response = await fetch(JSON_GAMES_URL);
     const data = await response.json();
-    
-    const jsonGames = data.items.map(item => ({
-      name:  item.title,
-      url:   item.url,
-      thumb: item.banner_image,
-      key:   null,          // null = sin botón de borrar
-      _src:  'json'         // marcador para distinguirlos de Firebase
-    }));
 
-    // Ordenar los de Firebase A-Z
-    window._games._firebase = (window._games._firebase || window._games.html
-      .filter(g => g.key !== null))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const jsonGames = data
+      .filter(item => item.url && item.url.includes('{HTML_URL}'))
+      .map(item => ({
+        name:  item.name,
+        url:   item.url.replace('{HTML_URL}', HTML_BASE),
+        thumb: (item.cover || '').replace('{COVER_URL}', COVER_BASE),
+        key:   null,
+        _src:  'json'
+      }));
 
-    // Ordenar los del JSON A-Z
     const jsonSorted = jsonGames.sort((a, b) => a.name.localeCompare(b.name));
-
-    // Combinar: Firebase primero, JSON después
-    window._games.html = [...window._games._firebase, ...jsonSorted];
+    window._games.html = [...(window._games._firebase || []), ...jsonSorted];
 
     if (typeof renderHtmlGames === 'function') renderHtmlGames();
-
   } catch(err) {
-    console.error('Error cargando JSON local:', err);
+    console.error('Error cargando JSON de juegos:', err);
   }
 }
 
