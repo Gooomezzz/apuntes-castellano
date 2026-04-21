@@ -74,6 +74,9 @@
     .link-card-name { font-size: 0.78rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
     .link-card-url { display: none; }
     .link-card-badge { font-family: 'Syne Mono', monospace; font-size: 0.48rem; color: var(--gold); border: 1px solid rgba(201,168,76,0.4); padding: 1px 4px; border-radius: 2px; flex-shrink: 0; }
+    .link-card-fav { position: absolute; bottom: 40px; right: 4px; background: none; border: none; font-size: 2.3rem; cursor: pointer; opacity: 0; transition: opacity 0.15s; line-height: 1; padding: 2px; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff, -1.5px 0 0 #fff, 1.5px 0 0 #fff, 0 -1.5px 0 #fff, 0 1.5px 0 #fff;}
+    .link-card-fav.active { opacity: 1 !important; filter: none; color: #f472b6; text-shadow: 0 0 8px rgba(244,114,182,0.6); }
+    .link-card:hover .link-card-fav { opacity: 1; }
     .link-card-remove { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); border: 1px solid var(--border-hi); border-radius: 3px; color: var(--text-3); font-size: 0.55rem; padding: 2px 5px; cursor: pointer; opacity: 0; transition: opacity 0.15s; line-height: 1; }
     .link-card:hover .link-card-remove { opacity: 1; }
     .link-card-glow { position: absolute; inset: 0; border-radius: 8px; opacity: 0; background: radial-gradient(circle at center, rgba(143,140,232,0.15), transparent 70%); transition: opacity 0.18s; pointer-events: none; }
@@ -272,6 +275,14 @@
 
     <!-- TAB: HTML GAMES -->
     <div class="tab-panel active" id="tab-html">
+      <!-- FAVORITOS -->
+      <div id="favSection" style="display:none;padding:0.75rem 1rem 0">
+        <div style="font-family:'Syne Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#f472b6;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem">
+          <span>♥</span> Favourites <span id="favCount" style="color:var(--text-3)"></span>
+        </div>
+        <div id="favList" class="links-grid"></div>
+        <div style="height:1px;background:var(--border);margin:0.75rem 0"></div>
+      </div>
       <div class="file-search-row">
         <input class="file-search" id="searchHtml" type="text" placeholder="Search games…" oninput="renderHtmlGames()" autocomplete="off">
         <span class="file-search-count" id="countHtmlVisible"></span>
@@ -859,16 +870,17 @@ function getGameEmoji(name) {
           
           // 2. Modificamos el thumb para que use background-image en el placeholder
           const thumb = g.thumb 
-            ? `<img class="link-card-thumb" src="${escHtml(g.thumb)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">
+            ? `<img class="link-card-thumb" src="${escHtml(g.thumb)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">
               <div class="link-card-thumb-placeholder" style="display:none; background-image: url('${imageUrl}')"></div>` 
             : `<div class="link-card-thumb-placeholder" style="background-image: url('${imageUrl}')"></div>`;
 
+          const isFav = window._favGames && window._favGames.has(g.name);
           return `<div class="link-card" onclick="launchGame('${escHtml(g.name)}','${escHtml(g.url)}')">
             <div class="link-card-glow"></div>
             ${thumb}
+            <button class="link-card-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFav('${escHtml(g.name)}','${escHtml(g.url)}','${escHtml(g.thumb||'')}')">♥</button>
             <div class="link-card-footer">
               <div class="link-card-name">${escHtml(g.name)}</div>
-              
             </div>
             ${g.key ? `<button class="link-card-remove" onclick="event.stopPropagation();removeGame('html','${g.key}')">✕</button>` : ''}
           </div>`;
@@ -876,6 +888,50 @@ function getGameEmoji(name) {
       }
       document.getElementById("countHtmlVisible").textContent = q ? `${filtered.length} / ${window._games.html.length}` : `${window._games.html.length} Games`;
     }
+// ── FAVOURITES ──
+window._favGames = new Set(JSON.parse(localStorage.getItem('_favGames') || '[]'));
+window._favData  = JSON.parse(localStorage.getItem('_favData')  || '{}');
+
+function toggleFav(name, url, thumb) {
+  if (window._favGames.has(name)) {
+    window._favGames.delete(name);
+    delete window._favData[name];
+  } else {
+    window._favGames.add(name);
+    window._favData[name] = { name, url, thumb };
+  }
+  localStorage.setItem('_favGames', JSON.stringify([...window._favGames]));
+  localStorage.setItem('_favData',  JSON.stringify(window._favData));
+  renderFavs();
+  renderHtmlGames();
+}
+
+function renderFavs() {
+  const favs = Object.values(window._favData);
+  const section = document.getElementById('favSection');
+  const list    = document.getElementById('favList');
+  const count   = document.getElementById('favCount');
+  if (!section) return;
+  if (favs.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  count.textContent = '(' + favs.length + ')';
+  list.innerHTML = favs.map(g => {
+    const imageUrl = getGameEmoji(g.name);
+    const thumb = g.thumb
+      ? `<img class="link-card-thumb" src="${escHtml(g.thumb)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="link-card-thumb-placeholder" style="display:none;background-image:url('${imageUrl}')"></div>`
+      : `<div class="link-card-thumb-placeholder" style="background-image:url('${imageUrl}')"></div>`;
+    return `<div class="link-card" onclick="launchGame('${escHtml(g.name)}','${escHtml(g.url)}')">
+      <div class="link-card-glow"></div>
+      ${thumb}
+      <button class="link-card-fav active" style="filter:none" onclick="event.stopPropagation();toggleFav('${escHtml(g.name)}','${escHtml(g.url)}','${escHtml(g.thumb||'')}')">♥</button>
+      <div class="link-card-footer"><div class="link-card-name">${escHtml(g.name)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// Init favs on load
+renderFavs();
+
 function renderLinks() {
   const container = document.getElementById("linksList");
   if (!container) return;
@@ -2300,6 +2356,7 @@ window.closeYT = function() {
         channelCache = {};
         dmPanelListeners = {};
         window._activeDMUser = null;
+        setTimeout(() => openAuth(), 800); // 👈 SOLO AÑADE ESTA LÍNEA
       }
     });
     function renderDMUserList(q) {
