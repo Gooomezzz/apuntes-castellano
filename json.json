@@ -151,7 +151,7 @@
 "name": "Supreme Duelist",
 "cover": "{COVER_URL}/19.png",
 "url": "{HTML_URL}/19.html",
-"author": "Neron's Brother",
+"author": "Nerons Brother",
 "authorLink": "https://neronsbrother.com"
 },
 {
@@ -297,7 +297,7 @@
 },
 {
 "id": 38,
-"name": "Five Nights at Freddy's",
+"name": "Five Nights at Freddys",
 "cover": "{COVER_URL}/38.png",
 "url": "{HTML_URL}/38.html",
 "author": "Scott Cawthon",
@@ -308,7 +308,7 @@
 },
 {
 "id": 39,
-"name": "Five Nights at Freddy's 2",
+"name": "Five Nights at Freddys 2",
 "cover": "{COVER_URL}/39.png",
 "url": "{HTML_URL}/39.html",
 "author": "Scott Cawthon",
@@ -320,7 +320,7 @@
 },
 {
 "id": 40,
-"name": "Five Nights at Freddy's 3",
+"name": "Five Nights at Freddys 3",
 "cover": "{COVER_URL}/40.png",
 "url": "{HTML_URL}/40.html",
 "author": "Scott Cawthon",
@@ -331,7 +331,7 @@
 },
 {
 "id": 41,
-"name": "Five Nights at Freddy's 4",
+"name": "Five Nights at Freddys 4",
 "cover": "{COVER_URL}/41.png",
 "url": "{HTML_URL}/41.html",
 "author": "Scott Cawthon",
@@ -541,7 +541,7 @@
 
 {
 "id": 65,
-"name": "Baldi's Basics",
+"name": "Baldis Basics",
 "cover": "{COVER_URL}/65.png",
 "url": "{HTML_URL}/65-fixed.html",
 "author": "Basically Games",
@@ -751,7 +751,7 @@
 "name": "Emulator.JS",
 "cover": "{COVER_URL}/87.png",
 "url": "{HTML_URL}/87.html",
-"author": "Ethan O'Brien",
+"author": "Ethan OBrien",
 "authorLink": "https://emulatorjs.org/",
 "special": [
 "emulator"
@@ -897,7 +897,7 @@
 },
 {
 "id": 103,
-"name": "The World's Hardest Game",
+"name": "The Worlds Hardest Game",
 
 "cover": "{COVER_URL}/103.png",
 "url": "{HTML_URL}/103.html",
@@ -909,7 +909,7 @@
 },
 {
 "id": 104,
-"name": "The World's Hardest Game 3",
+"name": "The Worlds Hardest Game 3",
 "cover": "{COVER_URL}/104.png",
 "url": "{HTML_URL}/104.html",
 "author": "Stevie Critoph",
@@ -920,7 +920,7 @@
 },
 {
 "id": 105,
-"name": "The World's Hardest Game 4",
+"name": "The Worlds Hardest Game 4",
 "cover": "{COVER_URL}/105.png",
 "url": "{HTML_URL}/105.html",
 "author": "Stevie Critoph",
@@ -1494,7 +1494,7 @@
 },
 {
 "id": 185,
-"name": "Five Nights at Freddy's: Sister Location",
+"name": "Five Nights at Freddys: Sister Location",
 "cover": "{COVER_URL}/185.png",
 "url": "{HTML_URL}/185.html",
 "author": "Scott Cawthon",
@@ -1534,7 +1534,7 @@
 },
 {
 "id": 190,
-"name": "Five Nights at Freddy's: World",
+"name": "Five Nights at Freddys: World",
 "cover": "{COVER_URL}/190.png",
 "url": "{HTML_URL}/190.html",
 "author": "Scott Cawthon",
@@ -1545,7 +1545,7 @@
 },
 {
 "id": 191,
-"name": "Five Nights at Freddy's: Pizza Simulator",
+"name": "Five Nights at Freddys: Pizza Simulator",
 "cover": "{COVER_URL}/191.png",
 "url": "{HTML_URL}/191.html",
 "author": "Scott Cawthon",
@@ -1557,7 +1557,7 @@
 },
 {
 "id": 192,
-"name": "Five Nights at Freddy's: Ultimate Custom Night",
+"name": "Five Nights at Freddys: Ultimate Custom Night",
 "cover": "{COVER_URL}/192.png",
 "url": "{HTML_URL}/192.html",
 "author": "Scott Cawthon",
@@ -1674,7 +1674,7 @@
 },
 {
 "id": 204,
-"name": "Five Nights at Winston's",
+"name": "Five Nights at Winstons",
 "cover": "{COVER_URL}/204.png",
 "url": "{HTML_URL}/204-a.html",
 "author": "lax1dude",
@@ -1782,7 +1782,7 @@
 },
 {
 "id": 216,
-"name": "That's Not My Neighbor",
+"name": "Thats Not My Neighbor",
 "cover": "{COVER_URL}/216.png",
 "url": "{HTML_URL}/216.html",
 "author": "Nacho Games",
@@ -1806,7 +1806,7 @@
 },
 {
 "id": 218,
-"name": "Papa's Bakeria",
+"name": "Papas Bakeria",
 "cover": "{COVER_URL}/218.png",
 "url": "{HTML_URL}/218.html",
 "author": "Flipline Studios",
@@ -1817,7 +1817,7 @@
 },
 {
 "id": 219,
-"name": "Papa's Burgeria",
+"name": "Papas Burgeria",
 "cover": "{COVER_URL}/219.png",
 "url": "{HTML_URL}/219.html",
 "author": "Flipline Studios",
@@ -1828,7 +1828,7 @@
 },
 {
 "id": 220,
-"name": "Papa's Cheeseria",
+"name": "Papas Cheeseria",
 "cover": "{COVER_URL}/220.png",
 "url": "{HTML_URL}/220.html",
 "author": "Flipline Studios",
@@ -1839,7 +1839,7 @@
 },
 {
 "id": 221,
-"name": "Papa's Cupcakeria",
+"name": "Papas Cupcakeria",
 "cover": "{COVER_URL}/221.png",
 "url": "{HTML_URL}/221.html",
 "author": "Flipline Studios",
@@ -1851,7 +1851,7 @@
 },
 {
 "id": 222,
-"name": "Papa's Donuteria",
+"name": "Papas Donuteria",
 "cover": "{COVER_URL}/222.png",
 "url": "{HTML_URL}/222.html",
 "author": "Flipline Studios",
@@ -1862,7 +1862,7 @@
 },
 {
 "id": 223,
-"name": "Papa's Freezeria",
+"name": "Papas Freezeria",
 "cover": "{COVER_URL}/223.png",
 "url": "{HTML_URL}/223.html",
 "author": "Flipline Studios",
@@ -1873,7 +1873,7 @@
 },
 {
 "id": 224,
-"name": "Papa's Hot Doggeria",
+"name": "Papas Hot Doggeria",
 "cover": "{COVER_URL}/224.png",
 "url": "{HTML_URL}/224.html",
 "author": "Flipline Studios",
@@ -1884,7 +1884,7 @@
 },
 {
 "id": 225,
-"name": "Papa's Pancakeria",
+"name": "Papas Pancakeria",
 "cover": "{COVER_URL}/225.png",
 "url": "{HTML_URL}/225.html",
 "author": "Flipline Studios",
@@ -1896,7 +1896,7 @@
 },
 {
 "id": 226,
-"name": "Papa's Pastaria",
+"name": "Papas Pastaria",
 "cover": "{COVER_URL}/226.png",
 "url": "{HTML_URL}/226.html",
 "author": "Flipline Studios",
@@ -1907,7 +1907,7 @@
 },
 {
 "id": 227,
-"name": "Papa's Pizeria",
+"name": "Papas Pizeria",
 "cover": "{COVER_URL}/227.png",
 "url": "{HTML_URL}/227.html",
 "author": "Flipline Studios",
@@ -1918,7 +1918,7 @@
 },
 {
 "id": 228,
-"name": "Papa's Scooperia",
+"name": "Papas Scooperia",
 "cover": "{COVER_URL}/228.png",
 "url": "{HTML_URL}/228.html",
 "author": "Flipline Studios",
@@ -1929,7 +1929,7 @@
 },
 {
 "id": 229,
-"name": "Papa's Sushiria",
+"name": "Papas Sushiria",
 "cover": "{COVER_URL}/229.png",
 "url": "{HTML_URL}/229.html",
 "author": "Flipline Studios",
@@ -1941,7 +1941,7 @@
 },
 {
 "id": 230,
-"name": "Papa's Taco Mia",
+"name": "Papas Taco Mia",
 "cover": "{COVER_URL}/230.png",
 "url": "{HTML_URL}/230.html",
 "author": "Flipline Studios",
@@ -1952,7 +1952,7 @@
 },
 {
 "id": 231,
-"name": "Papa's Wingeria",
+"name": "Papas Wingeria",
 "cover": "{COVER_URL}/231.png",
 "url": "{HTML_URL}/231.html",
 "author": "Flipline Studios",
@@ -2233,7 +2233,7 @@
 },
 {
 "id": 258,
-"name": "A Bite at Freddy's",
+"name": "A Bite at Freddys",
 "cover": "{COVER_URL}/258.png",
 "url": "{HTML_URL}/258.html",
 "author": "Garrett McKay",
@@ -2244,7 +2244,7 @@
 },
 {
 "id": 259,
-"name": "Class of '09",
+"name": "Class of 09",
 "cover": "{COVER_URL}/259.png",
 "url": "{HTML_URL}/259.html",
 "author": "sbn3",
@@ -3075,7 +3075,7 @@
 },
 {
 "id": 352,
-"name": "DON'T YOU LECTURE ME",
+"name": "DONT YOU LECTURE ME",
 "cover": "{COVER_URL}/352.png",
 "url": "{HTML_URL}/352.html",
 "author": "GD Colon",
@@ -3663,7 +3663,7 @@
 },
 {
 "id": 426,
-"name": "Andy's Apple Farm",
+"name": "Andys Apple Farm",
 "cover": "{COVER_URL}/426.png",
 "url": "{HTML_URL}/426.html",
 "author": "M36games",
@@ -3686,7 +3686,7 @@
 },
 {
 "id": 428,
-"name": "Five Nights at Freddy's 4: Halloween",
+"name": "Five Nights at Freddys 4: Halloween",
 "cover": "{COVER_URL}/428.png",
 
 "url": "{HTML_URL}/428.html",
@@ -3746,7 +3746,7 @@
 },
 {
 "id": 434,
-"name": "God's Flesh",
+"name": "Gods Flesh",
 "cover": "{COVER_URL}/434.png",
 "url": "{HTML_URL}/434.html",
 "author": "Glompyy",
@@ -3860,7 +3860,7 @@
 },
 {
 "id": 447,
-"name": "Nijika's Ahoge",
+"name": "Nijikas Ahoge",
 "cover": "{COVER_URL}/447.png",
 "url": "{HTML_URL}/447-e.html",
 "author": "TamaniDamani",
@@ -4024,7 +4024,7 @@
 },
 {
 "id": 463,
-"name": "Lacey's Flash Games",
+"name": "Laceys Flash Games",
 "cover": "{COVER_URL}/463.png",
 "url": "{HTML_URL}/463.html",
 "author": "ghosttundra, Euroclipse, Brand New Groove",
@@ -4056,7 +4056,7 @@
 },
 {
 "id": 466,
-"name": "Baldi's Basics Classic Remastered",
+"name": "Baldis Basics Classic Remastered",
 "cover": "{COVER_URL}/466.png",
 "url": "{HTML_URL}/466.html",
 "author": "Basically Games",
@@ -4067,7 +4067,7 @@
 },
 {
 "id": 467,
-"name": "Baldi's Basics Plus",
+"name": "Baldis Basics Plus",
 "cover": "{COVER_URL}/467.png",
 "url": "{HTML_URL}/467-updatee.html",
 "author": "Basically Games",
@@ -4140,7 +4140,7 @@
 {
 
 "id": 474,
-"name": "Friday Night Funkin': V.S. Whitty",
+"name": "Friday Night Funkin: V.S. Whitty",
 "cover": "{COVER_URL}/474.png",
 "url": "{HTML_URL}/474.html",
 "author": "Nate Anim8",
@@ -4148,7 +4148,7 @@
 },
 {
 "id": 475,
-"name": "Friday Night Funkin': B-Sides",
+"name": "Friday Night Funkin: B-Sides",
 "cover": "{COVER_URL}/475.png",
 "url": "{HTML_URL}/475.html",
 "author": "Rozebud",
@@ -4156,7 +4156,7 @@
 },
 {
 "id": 476,
-"name": "Friday Night Funkin': Vs. Hex",
+"name": "Friday Night Funkin: Vs. Hex",
 "cover": "{COVER_URL}/476.png",
 "url": "{HTML_URL}/476.html",
 "author": "YingYang48 etc",
@@ -4164,7 +4164,7 @@
 },
 {
 "id": 477,
-"name": "Friday Night Funkin': Vs. Hatsune Miku",
+"name": "Friday Night Funkin: Vs. Hatsune Miku",
 "cover": "{COVER_URL}/477.png",
 "url": "{HTML_URL}/477.html",
 "author": "evidal etc",
@@ -4172,7 +4172,7 @@
 },
 {
 "id": 478,
-"name": "Friday Night Funkin': Neo",
+"name": "Friday Night Funkin: Neo",
 "cover": "{COVER_URL}/478.png",
 "url": "{HTML_URL}/478.html",
 "author": "JellyFishedm etc",
@@ -4189,7 +4189,7 @@
 },
 {
 "id": 480,
-"name": "Friday Night Funkin': Sarvente's Mid-Fight Masses",
+"name": "Friday Night Funkin: Sarvente Mid-Fight Masses",
 "cover": "{COVER_URL}/480.png",
 "url": "{HTML_URL}/480.html",
 "author": "Dokki.doodlez etc",
@@ -4197,7 +4197,7 @@
 },
 {
 "id": 481,
-"name": "Friday Night Funkin': vs. Tricky",
+"name": "Friday Night Funkin: vs. Tricky",
 "cover": "{COVER_URL}/481.png",
 "url": "{HTML_URL}/481.html",
 "author": "Banbuds etc",
@@ -4216,7 +4216,7 @@
 },
 {
 "id": 483,
-"name": "Friday Night Funkin': Hit Single Real",
+"name": "Friday Night Funkin: Hit Single Real",
 "cover": "{COVER_URL}/483.png",
 "url": "{HTML_URL}/483.html",
 "author": "Sturm/Churgney Gurgney etc",
@@ -4224,7 +4224,7 @@
 },
 {
 "id": 484,
-"name": "Friday Night Funkin': Creepypasta JP",
+"name": "Friday Night Funkin: Creepypasta JP",
 "cover": "{COVER_URL}/484.png",
 "url": "{HTML_URL}/484.html",
 "author": "CPJP Team",
@@ -4233,7 +4233,7 @@
 },
 {
 "id": 485,
-"name": "Friday Night Funkin': vs. Garcello",
+"name": "Friday Night Funkin: vs. Garcello",
 "cover": "{COVER_URL}/485.png",
 "url": "{HTML_URL}/485.html",
 "author": "atsuover etc",
@@ -4241,7 +4241,7 @@
 },
 {
 "id": 486,
-"name": "Friday Night Funkin': Sonic Legacy",
+"name": "Friday Night Funkin: Sonic Legacy",
 "cover": "{COVER_URL}/486.png",
 "url": "{HTML_URL}/486.html",
 "author": "JoeDoughBoi etc",
@@ -4249,7 +4249,7 @@
 },
 {
 "id": 487,
-"name": "Friday Night Funkin': vs. QT",
+"name": "Friday Night Funkin: vs. QT",
 "cover": "{COVER_URL}/487.png",
 "url": "{HTML_URL}/487.html",
 "author": "Hazardous24 etc",
@@ -4257,7 +4257,7 @@
 },
 {
 "id": 488,
-"name": "Friday Night Funkin': Mistful Crimson Morning Reboot",
+"name": "Friday Night Funkin: Mistful Crimson Morning Reboot",
 "cover": "{COVER_URL}/488.png",
 "url": "{HTML_URL}/488.html",
 "author": "Stonesteve etc",
@@ -4265,7 +4265,7 @@
 },
 {
 "id": 489,
-"name": "Friday Night Funkin': Indie Cross",
+"name": "Friday Night Funkin: Indie Cross",
 "cover": "{COVER_URL}/489.png",
 "url": "{HTML_URL}/489.html",
 "author": "MORØ etc",
@@ -4323,7 +4323,7 @@
 },
 {
 "id": 496,
-"name": "Friday Night Funkin': Jeffy's Endless Aethos",
+"name": "Friday Night Funkin: Jeffys Endless Aethos",
 "cover": "{COVER_URL}/496.png",
 "url": "{HTML_URL}/496.html",
 "author": "jeffyfansml99 etc",
@@ -4331,7 +4331,7 @@
 },
 {
 "id": 497,
-"name": "Friday Night Funkin': vs. BOPCITY",
+"name": "Friday Night Funkin: vs. BOPCITY",
 "cover": "{COVER_URL}/497.png",
 "url": "{HTML_URL}/497.html",
 "author": "Daniel Hummus",
@@ -4339,7 +4339,7 @@
 },
 {
 "id": 498,
-"name": "Friday Night Funkin': 17 Bucks: Floor 1",
+"name": "Friday Night Funkin: 17 Bucks: Floor 1",
 "cover": "{COVER_URL}/498.png",
 "url": "{HTML_URL}/498.html",
 "author": "Peacocok6k",
@@ -4347,7 +4347,7 @@
 },
 {
 "id": 499,
-"name": "Friday Night Funkin': FIRE IN THE HOLE: Lobotomy Dash Funkin'",
+"name": "Friday Night Funkin: FIRE IN THE HOLE: Lobotomy Dash Funkin",
 "cover": "{COVER_URL}/499.png",
 "url": "{HTML_URL}/499.html",
 "author": "CoolDudeCrafter",
@@ -4355,7 +4355,7 @@
 },
 {
 "id": 500,
-"name": "Friday Night Funkin': TWIDDLEFINGER",
+"name": "Friday Night Funkin: TWIDDLEFINGER",
 "cover": "{COVER_URL}/500.png",
 "url": "{HTML_URL}/500.html",
 "author": "MAXPROLOVER998",
@@ -4386,7 +4386,7 @@
 },
 {
 "id": 503,
-"name": "Five Nights at Candy's",
+"name": "Five Nights at Candys",
 "cover": "{COVER_URL}/503.png",
 "url": "{HTML_URL}/503.html",
 "author": "Emil \"Ace\" Macko",
@@ -4397,7 +4397,7 @@
 },
 {
 "id": 504,
-"name": "Five Nights at Candy's 2",
+"name": "Five Nights at Candys 2",
 "cover": "{COVER_URL}/504.png",
 "url": "{HTML_URL}/504.html",
 "author": "Emil \"Ace\" Macko",
@@ -4522,7 +4522,7 @@
 },
 {
 "id": 517,
-"name": "Nubby's Number Factory",
+"name": "Nubbys Number Factory",
 "cover": "{COVER_URL}/517.png",
 "url": "{HTML_URL}/517.html",
 "author": "MogDogBlog Productions",
@@ -4597,7 +4597,7 @@
 },
 {
 "id": 525,
-"name": "Friday Night Funkin': Darkness Takeover",
+"name": "Friday Night Funkin: Darkness Takeover",
 "cover": "{COVER_URL}/525.png",
 "url": "{HTML_URL}/525.html",
 "author": "MiniSymba",
@@ -4621,7 +4621,7 @@
 },
 {
 "id": 528,
-"name": "SpongeBob SquarePants: Squidward's Sizzlin' Scare",
+"name": "SpongeBob SquarePants: Squidwards Sizzlin Scare",
 "cover": "{COVER_URL}/528.png",
 "url": "{HTML_URL}/528.html",
 "author": "Nickelodeon",
@@ -4629,7 +4629,7 @@
 },
 {
 "id": 529,
-"name": "SpongeBob SquarePants: Sandy's Sponge Stacker",
+"name": "SpongeBob SquarePants: Sandys Sponge Stacker",
 "cover": "{COVER_URL}/529.png",
 "url": "{HTML_URL}/529.html",
 "author": "Nickelodeon",
@@ -4728,7 +4728,7 @@
 },
 {
 "id": 541,
-"name": "Friday Night Funkin': Pibby: Apocalypse",
+"name": "Friday Night Funkin: Pibby: Apocalypse",
 "cover": "{COVER_URL}/541.png",
 "url": "{HTML_URL}/541.html",
 "author": "BAUDASlel etc.",
@@ -4800,7 +4800,7 @@
 },
 {
 "id": 549,
-"name": "Sonic the Hedgehog 2: Community's Cut",
+"name": "Sonic the Hedgehog 2: Communitys Cut",
 "cover": "{COVER_URL}/549.png",
 "url": "{HTML_URL}/549.html",
 "author": "heyjoeway and SEGA",
@@ -5073,7 +5073,7 @@
 },
 {
 "id": 582,
-"name": "Friday Night Funkin': Mario's Madness",
+"name": "Friday Night Funkin: Marios Madness",
 "cover": "{COVER_URL}/582.png",
 "url": "{HTML_URL}/582.html",
 "author": "Dewott2501 etc",
@@ -5081,7 +5081,7 @@
 },
 {
 "id": 583,
-"name": "Friday Night Funkin' vs Hypno Lullaby",
+"name": "Friday Night Funkin vs Hypno Lullaby",
 "cover": "{COVER_URL}/583.png",
 
 "url": "{HTML_URL}/583.html",
@@ -5256,10 +5256,10 @@
 },
 {
 "id": 600,
-"name": "FNF Vs. Hypno's Lullaby v2",
+"name": "FNF Vs. Hypnos Lullaby v2",
 "cover": "{COVER_URL}/600.png",
 "url": "{HTML_URL}/600.html",
-"author": "Hypno's Lullaby Team",
+"author": "Hypnos Lullaby Team",
 "authorLink": "https://gamebanana.com/wips/73522" ,
 "special": [
 "fnf"
@@ -5391,7 +5391,7 @@
 },
 {
 "id": 612,
-"name": "The Legend of Zelda Majora's Mask",
+"name": "The Legend of Zelda Majoras Mask",
 "cover": "{COVER_URL}/612.png",
 "url": "{HTML_URL}/612.html",
 "author": "Nintendo",
@@ -5404,7 +5404,7 @@
 },
 {
 "id": 613,
-"name": "Friday Night Funkin' Drop and Roll, but Playable",
+"name": "Friday Night Funkin Drop and Roll, but Playable",
 "cover": "{COVER_URL}/613.png",
 "url": "{HTML_URL}/613.html",
 "author": "Drop and roll team",
@@ -5434,10 +5434,10 @@
 },
 {
 "id": 616,
-"name": "Friday Night Funkin’ Wednesday's Infidelity",
+"name": "Friday Night Funkin’ Wednesdays Infidelity",
 "cover": "{COVER_URL}/616.png",
 "url": "{HTML_URL}/616.html",
-"author": "Wednesday's Infidelity team",
+"author": "Wednesdays Infidelity team",
 "authorLink": "https://gamebanana.com/mods/343688" ,
 "special": [
 "fnf"
@@ -5465,7 +5465,7 @@
 },
 {
 "id": 619,
-"name": "Friday Night Funkin': Rev-Mixed",
+"name": "Friday Night Funkin: Rev-Mixed",
 "cover": "{COVER_URL}/619.png",
 "url": "{HTML_URL}/619.html",
 "author": "Rev-Mixed team",
@@ -5484,7 +5484,7 @@
 },
 {
 "id": 621,
-"name": "Friday Night Funkin': Gumballs",
+"name": "Friday Night Funkin: Gumballs",
 "cover": "{COVER_URL}/621.png",
 "url": "{HTML_URL}/621.html",
 "author": "Gumballs team",
@@ -5595,12 +5595,12 @@
 "name": "Cave Story",
 "cover": "{COVER_URL}/632.png",
 "url": "{HTML_URL}/632-a.html",
-"author": " Daisuke 'Pixel' Amaya",
+"author": " Daisuke Pixel Amaya",
 "authorLink": "https://www.cavestory.org/"
 },
 {
 "id": 633,
-"name": "Friday Night Funkin': VS. Impostor: Alternated",
+"name": "Friday Night Funkin: VS. Impostor: Alternated",
 "cover": "{COVER_URL}/633.png",
 "url": "{HTML_URL}/633.html",
 "author": "Alternated team",
@@ -5611,7 +5611,7 @@
 },
 {
 "id": 634,
-"name": "Friday Night Funkin': Chaos Nightmare - Sonic Vs. Fleetway",
+"name": "Friday Night Funkin: Chaos Nightmare - Sonic Vs. Fleetway",
 "cover": "{COVER_URL}/634.png",
 "url": "{HTML_URL}/634.html",
 "author": "Fleetway team",
@@ -5631,7 +5631,7 @@
 },
 {
 "id": 636,
-"name": "Friday Night Funkin' D-Sides",
+"name": "Friday Night Funkin D-Sides",
 "cover": "{COVER_URL}/636.png",
 "url": "{HTML_URL}/636.html",
 "author": "d-sides team",
@@ -5664,7 +5664,7 @@
 },
 {
 "id": 639,
-"name": "Friday Night Funkin' VS Impostor B-Sides",
+"name": "Friday Night Funkin VS Impostor B-Sides",
 "cover": "{COVER_URL}/639.png",
 "url": "{HTML_URL}/639.html",
 "author": "Imposter b-sides team",
@@ -5698,7 +5698,7 @@
 },
 {
 "id": 642,
-"name": "Friday Night Funkin' Sunday Night Suicide: Rookies Edition",
+"name": "Friday Night Funkin Sunday Night Suicide: Rookies Edition",
 "cover": "{COVER_URL}/642.png",
 "url": "{HTML_URL}/642.html",
 "author": "Rookies team",
@@ -5729,7 +5729,7 @@
 },
 {
 "id": 645,
-"name": "Arthur's Nightmare",
+"name": "Arthurs Nightmare",
 "cover": "{COVER_URL}/645.png",
 "url": "{HTML_URL}/645-e.html",
 "author": "Varun R.",
@@ -5968,7 +5968,7 @@
 },
 {
 "id": 670,
-"name": "Raldi's Crackhouse",
+"name": "Raldis Crackhouse",
 "cover": "{COVER_URL}/670.png",
 "url": "{HTML_URL}/670.html",
 "author": "RCHTeam, Grayson",
@@ -6157,7 +6157,7 @@
 },
 {
 "id": 687,
-"name": "Pico's School (1999)",
+"name": "Picos School (1999)",
 "cover": "{COVER_URL}/687.png",
 "url": "{HTML_URL}/687.html",
 
@@ -6191,7 +6191,7 @@
 },
 {
 "id": 690,
-"name": "Friday Night Funkin': AKAGE",
+"name": "Friday Night Funkin: AKAGE",
 "cover": "{COVER_URL}/690.png",
 "url": "{HTML_URL}/690.html",
 "author": "owoskitty etc",
@@ -6202,7 +6202,7 @@
 },
 {
 "id": 691,
-"name": "Friday Night Funkin': Heartbreak Havoc [Vs. Sky: REDUX]",
+"name": "Friday Night Funkin: Heartbreak Havoc [Vs. Sky: REDUX]",
 "cover": "{COVER_URL}/691.png",
 "url": "{HTML_URL}/691.html",
 
@@ -6217,7 +6217,7 @@
 "name": "Kirby ~ Soft & Wet",
 "cover": "{COVER_URL}/692.png",
 "url": "{HTML_URL}/692.html",
-"author": "Strimp's Kitchen",
+"author": "Strimps Kitchen",
 "authorLink": "https://strimps-kitchen.itch.io/kirby-soft-and-wet" ,
 "special": [
 "port"
@@ -6335,7 +6335,7 @@
 },
 {
 "id": 704,
-"name": "Five Nights at Freddy's: World Refreshed",
+"name": "Five Nights at Freddys: World Refreshed",
 "cover": "{COVER_URL}/704.png",
 "url": "{HTML_URL}/704-fix.html",
 "author": "Pyturret, Willowy (squall.cc)",
@@ -6401,7 +6401,7 @@
 },
 {
 "id": 710,
-"name": "Five Nights at Epstein's",
+"name": "Five Nights at Epsteins",
 "cover": "{COVER_URL}/710.png",
 "url": "{HTML_URL}/710-fix.html",
 "author": "EvanProductions",
@@ -6882,7 +6882,7 @@
 },
 {
 "id": 756,
-"name": "Witch's Heart",
+"name": "Witchs Heart",
 "cover": "{COVER_URL}/756.png",
 "url": "{HTML_URL}/756-f.html",
 "author": "IZ (BLUE STAR Entertainment)",
@@ -6904,7 +6904,7 @@
 },
 {
 "id": 758,
-"name": "CaseOh's Basics in Eating and Fast Food",
+"name": "CaseOhs Basics in Eating and Fast Food",
 "cover": "{COVER_URL}/758.png",
 "url": "{HTML_URL}/758a.html",
 "author": "Ronezkj15",
@@ -6972,7 +6972,7 @@
 },
 {
 "id": 764,
-"name": "Five Night's at Shrek's Hotel",
+"name": "Five Nights at Shreks Hotel",
 "cover": "{COVER_URL}/764.png",
 "url": "{HTML_URL}/764.html",
 "author": "rend-pii",
@@ -7166,7 +7166,7 @@
 },
 {
 "id": 784,
-"name": "Gabriel's Awesome Schoolhouse (GASH)",
+"name": "Gabriels Awesome Schoolhouse (GASH)",
 "cover": "{COVER_URL}/784.png",
 "url": "{HTML_URL}/784.html",
 "author": "Gabriel115GJ",
