@@ -2099,7 +2099,7 @@ function renderHistory() {
     })();
     return `<div class="link-card" onclick="launchGame('${escHtml(g.name)}','${escHtml(g.url)}')">
       <div class="link-card-glow"></div>
-      <div class="link-card-thumb-placeholder" style="background-image:url('${imageUrl}');position:relative">
+      <div class="link-card-thumb-placeholder" style="background-image:url('${imageUrl}');position:relative;aspect-ratio:1/1;background-size:cover;background-position:center;display:block">
         <span style="position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.7);color:#fff;font-size:0.55rem;padding:2px 6px;border-radius:4px;font-family:'Be Vietnam Pro',sans-serif">${ago}</span>
       </div>
       <div class="link-card-footer"><div class="link-card-name">${escHtml(g.name)}</div></div>
@@ -2681,7 +2681,7 @@ function sendPushNotif(title, body, icon) {
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getDatabase, ref, push, onChildAdded, set, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, push, onChildAdded, onChildChanged, set, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const app = initializeApp({
     apiKey:"AIzaSyCvc6ukKAVhu_TCPGJ0sZuSDLweH4TNKIQ",
@@ -3011,7 +3011,7 @@ function sendPushNotif(title, body, icon) {
             if (!badge) {
               badge = document.createElement('span');
               badge.className = 'tab-notif-chat';
-              badge.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:8px;background:#00dbe9;color:#000;font-size:0.55rem;font-weight:800;padding:0 4px;margin-left:6px;line-height:1';
+              badge.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:8px;background:#ed4245;color:#fff;font-size:0.55rem;font-weight:800;padding:0 4px;margin-left:6px;line-height:1';
               chatTab.appendChild(badge);
             }
             badge.textContent = (parseInt(badge.textContent) || 0) + 1;
@@ -3028,6 +3028,7 @@ function sendPushNotif(title, body, icon) {
       const isAdmin = d.name === ADMIN_USER;
       const div = document.createElement('div');
       div.setAttribute('data-ctx', '1');
+      div.setAttribute('data-msgkey', snap.key);
       div.style.cssText = `display:flex;gap:8px;align-items:flex-start;padding:3px 14px;${isOwn?'flex-direction:row-reverse':''}${isMention&&!isOwn?';background:rgba(251,191,36,0.06);border-left:2px solid var(--gold)':''}`;
       if (!isOwn) div.addEventListener('contextmenu', e => showCtxMenu(e, d.name, div, msgKey));
       div.innerHTML = `
@@ -3037,7 +3038,7 @@ function sendPushNotif(title, body, icon) {
         </div>
         <div style="display:flex;flex-direction:column;max-width:72%;${isOwn?'align-items:flex-end':''}">
           ${!isOwn?`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:0.72rem;font-weight:700;color:${d.color}">${d.name}</span>${isAdmin?'<span style="font-size:0.52rem;background:rgba(251,191,36,0.2);color:var(--gold);padding:1px 6px;border-radius:3px;font-weight:800;border:1px solid rgba(251,191,36,0.4)">👑 ADMIN</span>':''}</div>`:''}
-          <div style="background:${isOwn?'rgba(0,219,233,0.12)':'rgba(255,255,255,0.06)'};border-radius:${isOwn?'12px 4px 12px 12px':'4px 12px 12px 12px'};padding:6px 12px;font-size:0.875rem;line-height:1.5;color:var(--text);word-break:break-word;border:1px solid ${isOwn?'rgba(0,219,233,0.25)':isMention&&!isOwn?'rgba(251,191,36,0.3)':'rgba(255,255,255,0.06)'}">${d.img?`<img src="${d.img}" onclick="openImg(this.src)" style="max-width:200px;max-height:200px;border-radius:6px;display:block;cursor:zoom-in">`:formatText(d.text, loggedName)}</div>
+          <div class="msg-bubble" style="background:${isOwn?'rgba(0,219,233,0.12)':'rgba(255,255,255,0.06)'};border-radius:${isOwn?'12px 4px 12px 12px':'4px 12px 12px 12px'};padding:6px 12px;font-size:0.875rem;line-height:1.5;color:var(--text);word-break:break-word;border:1px solid ${isOwn?'rgba(0,219,233,0.25)':isMention&&!isOwn?'rgba(251,191,36,0.3)':'rgba(255,255,255,0.06)'}">${d.img?`<img src="${d.img}" onclick="openImg(this.src)" style="max-width:200px;max-height:200px;border-radius:6px;display:block;cursor:zoom-in">`:formatText(d.text, loggedName)}</div>
           <span style="font-family:'Be Vietnam Pro',sans-serif;font-size:0.55rem;color:var(--text-3);margin-top:3px;opacity:0.6">${d.name} · ${relativeTime(d.ts)}</span>
         </div>`;
       if (!channelCache[channelId]) channelCache[channelId] = [];
@@ -3049,6 +3050,22 @@ function sendPushNotif(title, body, icon) {
         msgs.scrollTop = msgs.scrollHeight;
       }
     });
+    // ── Detect IA message updates ──
+onChildChanged(ref(db, 'channelMessages/' + channelId), snap => {
+  const d = snap.val();
+  if (!d || !d.isAI) return;
+  if (activeChannel !== channelId) return;
+  const msgs = document.getElementById('chatMessages');
+  if (!msgs) return;
+  const existing = msgs.querySelector(`[data-msgkey="${snap.key}"]`);
+  if (existing) {
+    // Replace entire bubble content cleanly
+    const bubble = existing.querySelector('.msg-bubble');
+    if (bubble) {
+      bubble.innerHTML = d.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+    }
+  }
+});
   }
 
   onValue(ref(db, 'bans'), snap => {
@@ -3139,6 +3156,28 @@ function filterMessage(text) {
   }
   return result;
 }
+// ── Build chat context for IA ──
+function getChatContext() {
+  const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000);
+  const cache = channelCache[activeChannel] || [];
+  const lines = [];
+  cache.forEach(div => {
+    // Skip IA messages and typing indicators
+    if (div.querySelector('[style*="#00dbe9"]') && div.textContent.includes('IA')) return;
+    const nameEl = div.querySelector('[style*="font-weight:700"]');
+    const bubbleEl = div.querySelector('.msg-bubble');
+    const timeEl = div.querySelector('[style*="0.55rem"]');
+    if (!nameEl || !bubbleEl) return;
+    const msgName = nameEl.textContent.trim();
+    const msgText = bubbleEl.textContent.trim();
+    const timeText = timeEl?.textContent?.trim() || '';
+    if (!msgText || msgText === '...') return;
+    lines.push(`[${timeText}] ${msgName}: ${msgText}`);
+  });
+  // Max 80 lines to not exceed token limit
+  const recent = lines.slice(-80);
+  return recent.length > 0 ? recent.join('\n') : 'No hay mensajes recientes.';
+}
   // ── Chat send ──
 window.sendMsg = async () => {
     const input = document.getElementById('chatInput');
@@ -3151,48 +3190,51 @@ window.sendMsg = async () => {
     const isMuted = await new Promise(res => { onValue(ref(db, 'muted/' + name), s => res(s.val()), { onlyOnce: true }); });
     if (isMuted) { showToast('🔇 You are muted'); return; }
 
-    // ── @IA detection ──
-    const aiMention = text.match(/^@[Ii][Aa]\s+(.+)/s);
-    if (aiMention) {
-      const question = aiMention[1].trim();
-      // Post user message first
-      await push(ref(db, 'channelMessages/' + activeChannel), {
-        text: filterMessage(text), img: '', name, color: col(name), avatar: u._avatar||'', ts: Date.now()
-      });
-      // Post IA typing indicator
-      const typingMsg = await push(ref(db, 'channelMessages/' + activeChannel), {
-        text: '...', img: '', name: 'IA', color: '#00dbe9', avatar: '', ts: Date.now(), isAI: true
-      });
-      // Call Groq
-      try {
-        const groqKey = window.GROQ_KEY || window._groqKey;
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            max_tokens: 300,
-            messages: [
-              { role: 'system', content: 'Eres una IA de asistencia en un chat de amigos. Responde de forma breve, directa y en el mismo idioma que te hablen. Máximo 3 frases.' },
-              { role: 'user', content: question }
-            ]
-          })
-        });
-        const data = await res.json();
-        const reply = data.choices?.[0]?.message?.content || 'No pude responder 😅';
-        // Update the typing message with real reply
-        const { ref: r, set: s } = window._fbFns;
-        await s(r(window._fbDb, 'channelMessages/' + activeChannel + '/' + typingMsg.key), {
-          text: reply, img: '', name: 'IA 🤖', color: '#00dbe9', avatar: '', ts: Date.now(), isAI: true
-        });
-      } catch(e) {
-        const { ref: r, set: s } = window._fbFns;
-        await s(r(window._fbDb, 'channelMessages/' + activeChannel + '/' + typingMsg.key), {
-          text: 'Error conectando con la IA 😅', img: '', name: 'IA 🤖', color: '#00dbe9', avatar: '', ts: Date.now(), isAI: true
-        });
-      }
-      return;
-    }
+// ── @IA detection ──
+const aiMention = text.match(/^@[Ii][Aa]\s+(.+)/s);
+if (aiMention) {
+  const question = aiMention[1].trim();
+  // Post user message
+  await push(ref(db, 'channelMessages/' + activeChannel), {
+    text: filterMessage(text), img: '', name, color: col(name), avatar: u._avatar||'', ts: Date.now()
+  });
+  // Post placeholder
+  const placeholderRef = await push(ref(db, 'channelMessages/' + activeChannel), {
+    text: '...', img: '', name: 'IA', color: '#00dbe9', avatar: '', ts: Date.now(), isAI: true
+  });
+  // Call Groq
+  try {
+    const groqKey = window.GROQ_KEY || window._groqKey;
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'system',
+            content: `Eres una IA de asistencia integrada en un chat de amigos llamado NEON HUB. Tienes acceso al historial reciente del canal. Responde de forma breve y directa en el mismo idioma que te hablen. Máximo 3-4 frases. Puedes hacer referencia a lo que han dicho los usuarios si es relevante.`
+          },
+          {
+            role: 'user',
+            content: `Historial reciente del chat (últimos 3 días):\n${getChatContext()}\n\n---\nPregunta de ${name}: ${question}`
+          }
+        ]
+      })
+    });
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content || 'No pude responder';
+    await set(ref(db, 'channelMessages/' + activeChannel + '/' + placeholderRef.key), {
+      text: reply, img: '', name: 'IA', color: '#00dbe9', avatar: '', ts: Date.now(), isAI: true
+    });
+  } catch(e) {
+    await set(ref(db, 'channelMessages/' + activeChannel + '/' + placeholderRef.key), {
+      text: 'Error conectando con la IA', img: '', name: 'IA', color: '#00dbe9', avatar: '', ts: Date.now(), isAI: true
+    });
+  }
+  return;
+}
 
     const allowed = await aiModerateMessage(text, name);
     if (!allowed) {
