@@ -901,6 +901,85 @@ body.light-mode .link-card {
   font-family:'Be Vietnam Pro',sans-serif; font-size:0.72rem;
   cursor:pointer; text-decoration:underline;
 }
+/* ── Floating chat button ── */
+#floatingChatBtn {
+  position: absolute; bottom: 24px; right: 24px; z-index: 1100;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: #1d2026; border: 1px solid rgba(0,219,233,0.4);
+  color: #00dbe9; cursor: pointer;
+  display: none; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,219,233,0.15);
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-size: 1.2rem;
+}
+#floatingChatBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 16px rgba(0,219,233,0.3);
+}
+.game-modal.show #floatingChatBtn { display: flex; }
+#floatingChatBadge {
+  position: absolute; top: -4px; right: -4px;
+  min-width: 18px; height: 18px; border-radius: 9px;
+  background: #ed4245; color: #fff;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.55rem; font-weight: 800;
+  display: none; align-items: center; justify-content: center;
+  padding: 0 4px; border: 2px solid #1d2026; line-height: 1;
+}
+#floatingChatBadge.has-notif { display: flex; }
+
+/* ── Floating chat panel ── */
+#floatingChatPanel {
+  position: absolute; bottom: 84px; right: 24px; z-index: 1100;
+  width: 340px; height: 480px;
+  background: #0d0f15;
+  border: 1px solid rgba(0,219,233,0.2);
+  border-radius: 16px; overflow: hidden;
+  display: none; flex-direction: column;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  animation: settingsFadeIn 0.2s ease;
+}
+#floatingChatPanel.open { display: flex; }
+.fc-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px;
+  background: #111318;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.fc-tab {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--text-3); background: none; border: none;
+  padding: 4px 10px; border-radius: 6px; cursor: pointer;
+  transition: 0.15s; position: relative;
+}
+.fc-tab.active { color: #00dbe9; background: rgba(0,219,233,0.1); }
+.fc-messages {
+  flex: 1; overflow-y: auto; padding: 8px 0;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.fc-messages::-webkit-scrollbar { width: 3px; }
+.fc-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.fc-input-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: #111318; flex-shrink: 0;
+}
+.fc-input {
+  flex: 1; background: rgba(255,255,255,0.06);
+  border: none; border-radius: 8px;
+  color: var(--text); font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.82rem; padding: 8px 12px; outline: none;
+}
+.fc-input::placeholder { color: var(--text-3); }
+.fc-send {
+  background: none; border: none; color: #00dbe9;
+  cursor: pointer; font-size: 1.1rem; padding: 4px;
+  line-height: 1; transition: color 0.15s;
+}
+.fc-send:hover { color: #7df4ff; }
   </style>
 </head>
 <body>
@@ -1586,6 +1665,52 @@ body.light-mode .link-card {
     <button class="game-close" onclick="closeGame()">✕ Close</button>
   </div>
   <iframe class="game-frame" id="gameFrame" src="" allowfullscreen></iframe>
+
+<!-- Floating chat button -->
+<button id="floatingChatBtn" onclick="toggleFloatingChat()">
+  <span class="material-symbols-outlined" style="font-size:1.3rem">chat</span>
+  <span id="floatingChatBadge"></span>
+</button>
+
+<!-- Floating chat panel -->
+<div id="floatingChatPanel">
+  <div class="fc-header">
+    <button class="fc-tab active" id="fcTabChat" onclick="switchFcTab('chat')">
+      💬 Chat <span id="fcChatBadge" style="display:none;background:#ed4245;color:#fff;font-size:0.5rem;font-weight:800;padding:1px 5px;border-radius:6px;margin-left:3px"></span>
+    </button>
+    <button class="fc-tab" id="fcTabDms" onclick="switchFcTab('dms')">
+      ✉️ DMs <span id="fcDmsBadge" style="display:none;background:#ed4245;color:#fff;font-size:0.5rem;font-weight:800;padding:1px 5px;border-radius:6px;margin-left:3px"></span>
+    </button>
+    <div style="flex:1"></div>
+    <button onclick="toggleFloatingChat()" style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:1rem;line-height:1;padding:2px">✕</button>
+  </div>
+
+  <!-- Chat panel -->
+  <div id="fcChatView" style="flex:1;display:flex;flex-direction:column;min-height:0">
+    <div id="fcMessages" class="fc-messages"></div>
+    <div class="fc-input-row">
+      <input class="fc-input" id="fcInput" type="text" placeholder="Message #general…"
+        autocomplete="off" onkeydown="if(event.key==='Enter')fcSendMsg()">
+      <button class="fc-send" onclick="fcSendMsg()">
+        <span class="material-symbols-outlined" style="font-size:1.1rem">send</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- DMs panel -->
+  <div id="fcDmsView" style="flex:1;display:none;flex-direction:column;min-height:0">
+    <div id="fcDmsList" style="flex:1;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:4px"></div>
+    <div id="fcDmsMessages" class="fc-messages" style="display:none"></div>
+    <div id="fcDmsInputRow" class="fc-input-row" style="display:none">
+      <button onclick="fcBackToDmList()" style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:0.8rem;padding:4px">←</button>
+      <input class="fc-input" id="fcDmsInput" type="text" placeholder="Private message…"
+        autocomplete="off" onkeydown="if(event.key==='Enter')fcSendDm()">
+      <button class="fc-send" onclick="fcSendDm()">
+        <span class="material-symbols-outlined" style="font-size:1.1rem">send</span>
+      </button>
+    </div>
+  </div>
+</div>
 </div>
 
 <!-- RATING MODAL -->
@@ -1828,7 +1953,13 @@ function renderAll() {
   const allGames = window._games.html || [];
   const _cg = document.getElementById("countGames");
   if (_cg) _cg.textContent = allGames.length;
-  renderHistory(); // <- añade esta línea
+  renderHistory();
+  // Preload ratings for all games
+  if (window._fbDb && window._fbFns) {
+    allGames.forEach(g => {
+      if (!_ratingsCache[g.name]) loadGameRating(g.name);
+    });
+  }
 }
 
   function getLinkImage(name) {
@@ -2087,7 +2218,7 @@ function renderHistory() {
   if (history.length === 0) { section.style.display = 'none'; return; }
   section.style.display = 'block';
   list.innerHTML = history.slice(0, 8).map(g => {
-    const imageUrl = getGameEmoji(g.name);
+    const imageUrl = typeof getGameEmoji === 'function' ? getGameEmoji(g.name) : 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400&auto=format&fit=crop';
     const ago = (() => {
       const diff = Date.now() - g.ts;
       const mins = Math.floor(diff/60000);
@@ -2099,7 +2230,7 @@ function renderHistory() {
     })();
     return `<div class="link-card" onclick="launchGame('${escHtml(g.name)}','${escHtml(g.url)}')">
       <div class="link-card-glow"></div>
-      <div class="link-card-thumb-placeholder" style="background-image:url('${imageUrl}');position:relative;aspect-ratio:1/1;background-size:cover;background-position:center;display:block">
+      <div style="width:100%;aspect-ratio:1/1;background-image:url('${imageUrl}');background-size:cover;background-position:center;position:relative;display:block">
         <span style="position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.7);color:#fff;font-size:0.55rem;padding:2px 6px;border-radius:4px;font-family:'Be Vietnam Pro',sans-serif">${ago}</span>
       </div>
       <div class="link-card-footer"><div class="link-card-name">${escHtml(g.name)}</div></div>
@@ -2123,6 +2254,7 @@ function closeGame() {
     if (t === 'chat') {
       const badge = document.querySelector('.tab-notif-chat');
       if (badge) badge.remove();
+      if (window._markChatSeen) window._markChatSeen(window._activeChannel || 'general');
     }
   }
 // ── Theme toggle ──
@@ -2712,6 +2844,19 @@ function sendPushNotif(title, body, icon) {
   let dmUnread = {};
   let dmLastSeen = {};
   let dmPanelListeners = {};
+    // ── Chat last seen (like DMs) ──
+    let chatLastSeen = {};
+    try { chatLastSeen = JSON.parse(localStorage.getItem('chat_last_seen') || '{}'); } catch(e) { chatLastSeen = {}; }
+    function saveChatLastSeen() { localStorage.setItem('chat_last_seen', JSON.stringify(chatLastSeen)); }
+    // Exponer para que switchTab (script global) pueda usarlo
+    window._markChatSeen = (channelId) => {
+      chatLastSeen[channelId] = Date.now();
+      saveChatLastSeen();
+    };
+    window._markDmSeen = (key) => {
+  dmLastSeen[key] = Date.now();
+  saveDmLastSeen();
+};
 
   try { dmLastSeen = JSON.parse(localStorage.getItem('dm_last_seen') || '{}'); } catch(e) { dmLastSeen = {}; }
   function saveDmLastSeen() { localStorage.setItem('dm_last_seen', JSON.stringify(dmLastSeen)); }
@@ -2742,6 +2887,7 @@ function sendPushNotif(title, body, icon) {
   }
 
   let channelListeners = {}, channelCache = {};
+window._channelCache = channelCache;
   window._renderChannels = (chs) => renderChannels(chs);
   window._getCurrentChannels = () => currentChannels;
 
@@ -3003,8 +3149,9 @@ function sendPushNotif(title, body, icon) {
         if (!channelCache[channelId]) channelCache[channelId] = [];
 
         channelCache[channelId].push(div);
-        const isTabActive = document.getElementById('tab-chat').classList.contains('active');
-        if (!isTabActive) {
+        const isTabActive = document.getElementById('tab-chat').classList.contains('active') && document.hasFocus();
+        const lastSeen = chatLastSeen[channelId] || 0;
+        if (!isTabActive && d.ts > lastSeen && !isOwn) {
           const chatTab = document.querySelectorAll('.tab-btn')[1];
           if (chatTab) {
             let badge = chatTab.querySelector('.tab-notif-chat');
@@ -3049,7 +3196,27 @@ function sendPushNotif(title, body, icon) {
         msgs.appendChild(div);
         msgs.scrollTop = msgs.scrollHeight;
       }
+      if (window._fcListenNewMessages) window._fcListenNewMessages(div);
+      // ── Badge para mensajes normales ──
+      if (!isOwn && !d.isAI) {
+        const isTabActive = document.getElementById('tab-chat').classList.contains('active') && document.hasFocus();
+        const lastSeen = chatLastSeen[channelId] || 0;
+        if (!isTabActive && d.ts > lastSeen) {
+          const chatTab = document.querySelectorAll('.tab-btn')[1];
+          if (chatTab) {
+            let badge = chatTab.querySelector('.tab-notif-chat');
+            if (!badge) {
+              badge = document.createElement('span');
+              badge.className = 'tab-notif-chat';
+              badge.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:8px;background:#ed4245;color:#fff;font-size:0.55rem;font-weight:800;padding:0 4px;margin-left:6px;line-height:1';
+              chatTab.appendChild(badge);
+            }
+            badge.textContent = (parseInt(badge.textContent) || 0) + 1;
+          }
+        }
+      }
     });
+    // ── Detect IA message updates ──
     // ── Detect IA message updates ──
 onChildChanged(ref(db, 'channelMessages/' + channelId), snap => {
   const d = snap.val();
@@ -3425,6 +3592,7 @@ fetch('https://api.ipify.org?format=json')
     if (!me) return;
     onValue(ref(db, 'users'), snap => {
       allDMUsers = snap.val() ? Object.values(snap.val()).filter(u => u.name && u.name !== me) : [];
+      window._allDMUsers = allDMUsers;
       renderDMUserList('');
       allDMUsers.forEach(u => {
         const key = getDMKey(me, u.name);
@@ -3432,6 +3600,8 @@ fetch('https://api.ipify.org?format=json')
           const msgs = snap2.val() ? Object.values(snap2.val()) : [];
           const lastSeen = dmLastSeen[key] || 0;
           dmUnread[u.name] = msgs.filter(m => m.ts > lastSeen && m.from !== me).length;
+          window._dmUnread = dmUnread;
+          fcUpdateBadges();
           renderDMUserList('');
           updateDMTabBadge();
         });
@@ -3831,6 +4001,213 @@ async function aiModerateMessage(text, userName) {
     return true; // si falla la IA, dejar pasar
   }
 }
+// ── Floating Chat ──
+let _fcOpen = false;
+let _fcTab = 'chat';
+let _fcDmUser = null;
+let _fcChatListenerSet = false;
+
+window.toggleFloatingChat = function() {
+  _fcOpen = !_fcOpen;
+  const panel = document.getElementById('floatingChatPanel');
+  panel.classList.toggle('open', _fcOpen);
+  if (_fcOpen) {
+    fcInitChat();
+    fcUpdateBadges();
+  }
+};
+
+window.switchFcTab = function(tab) {
+  _fcTab = tab;
+  document.getElementById('fcTabChat').classList.toggle('active', tab === 'chat');
+  document.getElementById('fcTabDms').classList.toggle('active', tab === 'dms');
+  document.getElementById('fcChatView').style.display = tab === 'chat' ? 'flex' : 'none';
+  document.getElementById('fcDmsView').style.display = tab === 'dms' ? 'flex' : 'none';
+  if (tab === 'dms') fcRenderDmList();
+  if (tab === 'chat') {
+    // Mark chat as seen
+    if (window._markChatSeen) window._markChatSeen(window._activeChannel || 'general');
+    document.getElementById('fcChatBadge').style.display = 'none';
+    fcUpdateBadges();
+  }
+};
+
+function fcInitChat() {
+  if (_fcChatListenerSet) {
+    const msgs = document.getElementById('fcMessages');
+    msgs.scrollTop = msgs.scrollHeight;
+    return;
+  }
+  _fcChatListenerSet = true;
+  const msgs = document.getElementById('fcMessages');
+  // Clone existing messages from channelCache
+  const cache = window._channelCache?.[window._activeChannel || 'general'] || [];
+  cache.slice(-30).forEach(div => {
+    const clone = div.cloneNode(true);
+    clone.style.cssText = div.style.cssText.replace('padding:3px 14px', 'padding:2px 10px');
+    msgs.appendChild(clone);
+  });
+  msgs.scrollTop = msgs.scrollHeight;
+  // Listen for new messages via Firebase
+  window._fcListenNewMessages = (div) => {
+    const clone = div.cloneNode(true);
+    clone.style.cssText = div.style.cssText.replace('padding:3px 14px', 'padding:2px 10px');
+    msgs.appendChild(clone);
+    msgs.scrollTop = msgs.scrollHeight;
+    // ── Feed floating chat if open ──
+if (window._fcListenNewMessages && !isOwn) {
+  window._fcListenNewMessages(div);
+}
+    // Badge si panel cerrado o en tab dms
+    if (!_fcOpen || _fcTab !== 'chat') {
+      const badge = document.getElementById('fcChatBadge');
+      badge.style.display = 'inline';
+      badge.textContent = (parseInt(badge.textContent) || 0) + 1;
+      fcUpdateBadges();
+    }
+  };
+}
+
+window.fcSendMsg = async function() {
+  const input = document.getElementById('fcInput');
+  const text = input.value.trim();
+  if (!text || !window._fbAuth?.currentUser) return;
+  input.value = '';
+  const u = window._fbAuth.currentUser;
+  const name = u.displayName;
+  const COLORS = ['#00dbe9','#fbbf24','#2ff801','#f87171','#7df4ff','#60a5fa'];
+  const col = n => { let h=0; for(let c of n) h+=c.charCodeAt(0); return COLORS[h%COLORS.length]; };
+  const { ref, push } = window._fbFns;
+  await push(ref(window._fbDb, 'channelMessages/' + (window._activeChannel || 'general')), {
+    text, img: '', name, color: col(name), avatar: u._avatar||'', ts: Date.now()
+  });
+};
+
+function fcRenderDmList() {
+  const list = document.getElementById('fcDmsList');
+  const users = window._allDMUsers || [];
+  const unread = window._dmUnread || {};
+  if (users.length === 0) {
+    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-3);font-family:'Be Vietnam Pro',sans-serif;font-size:0.72rem">No conversations yet</div>`;
+    return;
+  }
+  list.innerHTML = '';
+  [...users].sort((a,b) => (unread[b.name]||0)-(unread[a.name]||0)).forEach(u => {
+    const COLORS = ['#00dbe9','#fbbf24','#2ff801','#f87171','#7df4ff','#60a5fa'];
+    const col = n => { let h=0; for(let c of n) h+=c.charCodeAt(0); return COLORS[h%COLORS.length]; };
+    const unreadCount = unread[u.name] || 0;
+    const btn = document.createElement('div');
+    btn.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-radius:8px;transition:background 0.1s';
+    btn.onmouseenter = () => btn.style.background = 'rgba(255,255,255,0.05)';
+    btn.onmouseleave = () => btn.style.background = 'transparent';
+    btn.innerHTML = `
+      <div style="position:relative;flex-shrink:0">
+        <div style="width:32px;height:32px;border-radius:50%;background:${col(u.name)};display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:800;color:#fff;font-family:'Be Vietnam Pro',sans-serif">${u.name.slice(0,2).toUpperCase()}</div>
+        ${unreadCount?`<span style="position:absolute;top:-3px;right:-3px;min-width:15px;height:15px;border-radius:8px;background:#ed4245;color:#fff;font-size:0.5rem;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #0d0f15">${unreadCount}</span>`:''}
+      </div>
+      <span style="font-family:'Be Vietnam Pro',sans-serif;font-size:0.78rem;color:${unreadCount?'var(--text)':'var(--text-2)'};font-weight:${unreadCount?'700':'500'}">${u.name}</span>`;
+    btn.onclick = () => fcOpenDm(u.name);
+    list.appendChild(btn);
+  });
+}
+
+function fcOpenDm(otherUser) {
+  _fcDmUser = otherUser;
+  document.getElementById('fcDmsList').style.display = 'none';
+  document.getElementById('fcDmsMessages').style.display = 'flex';
+  document.getElementById('fcDmsMessages').style.flexDirection = 'column';
+  document.getElementById('fcDmsInputRow').style.display = 'flex';
+  const msgs = document.getElementById('fcDmsMessages');
+  msgs.innerHTML = '';
+  const me = window._fbAuth?.currentUser?.displayName;
+  const key = [me, otherUser].sort().join('__');
+  const cache = window._dmCache?.[key] || [];
+  if (cache.length > 0) {
+    cache.slice(-30).forEach(d => fcRenderDmMsg(msgs, d, d.from === me));
+    msgs.scrollTop = msgs.scrollHeight;
+  } else if (window._fbDb && window._fbFns) {
+    // Cache vacío: cargar directamente de Firebase
+    const { ref, onChildAdded } = window._fbFns;
+    if (!window._dmCache) window._dmCache = {};
+    if (!window._dmCache[key]) window._dmCache[key] = [];
+    onChildAdded(ref(window._fbDb, 'dms/' + key), snap => {
+      const d = snap.val();
+      window._dmCache[key].push(d);
+      if (_fcDmUser === otherUser) {
+        fcRenderDmMsg(msgs, d, d.from === me);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+    });
+  }
+  if (window._markDmSeen) window._markDmSeen(key);
+  if (window._dmUnread) window._dmUnread[otherUser] = 0;
+  fcUpdateBadges();
+}
+
+window.fcBackToDmList = function() {
+  _fcDmUser = null;
+  document.getElementById('fcDmsList').style.display = 'flex';
+  document.getElementById('fcDmsList').style.flexDirection = 'column';
+  document.getElementById('fcDmsMessages').style.display = 'none';
+  document.getElementById('fcDmsInputRow').style.display = 'none';
+  fcRenderDmList();
+};
+
+function fcRenderDmMsg(container, d, isOwn) {
+  const div = document.createElement('div');
+  div.style.cssText = `display:flex;gap:6px;align-items:flex-start;padding:2px 10px;${isOwn?'flex-direction:row-reverse':''}`;
+  const COLORS = ['#00dbe9','#fbbf24','#2ff801','#f87171','#7df4ff','#60a5fa'];
+  const col = n => { let h=0; for(let c of n) h+=c.charCodeAt(0); return COLORS[h%COLORS.length]; };
+  div.innerHTML = `
+    <div style="width:22px;height:22px;border-radius:50%;background:${d.color||col(d.from||'?')};display:flex;align-items:center;justify-content:center;font-size:0.5rem;font-weight:800;color:#fff;flex-shrink:0;font-family:'Be Vietnam Pro',sans-serif">${(d.from||'?').slice(0,2).toUpperCase()}</div>
+    <div style="max-width:75%;${isOwn?'align-items:flex-end':''}display:flex;flex-direction:column">
+      <div style="background:${isOwn?'rgba(0,219,233,0.12)':'rgba(255,255,255,0.06)'};border-radius:${isOwn?'10px 3px 10px 10px':'3px 10px 10px 10px'};padding:5px 10px;font-size:0.8rem;color:var(--text);word-break:break-word">${(d.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+    </div>`;
+  container.appendChild(div);
+}
+
+window.fcSendDm = async function() {
+  const input = document.getElementById('fcDmsInput');
+  const text = input.value.trim();
+  if (!text || !_fcDmUser || !window._fbAuth?.currentUser) return;
+  input.value = '';
+  const me = window._fbAuth.currentUser.displayName;
+  const COLORS = ['#00dbe9','#fbbf24','#2ff801','#f87171','#7df4ff','#60a5fa'];
+  const col = n => { let h=0; for(let c of n) h+=c.charCodeAt(0); return COLORS[h%COLORS.length]; };
+  const key = [me, _fcDmUser].sort().join('__');
+  const { ref, push } = window._fbFns;
+  await push(ref(window._fbDb, 'dms/' + key), { text, from: me, color: col(me), ts: Date.now() });
+  // Render locally
+  const msgs = document.getElementById('fcDmsMessages');
+  fcRenderDmMsg(msgs, { text, from: me, color: col(me), ts: Date.now() }, true);
+  msgs.scrollTop = msgs.scrollHeight;
+};
+
+function fcUpdateBadges() {
+  const chatBadge = parseInt(document.getElementById('fcChatBadge')?.textContent) || 0;
+  const dmTotal = Object.values(window._dmUnread || {}).reduce((a,b) => a+b, 0);
+  const total = chatBadge + dmTotal;
+  const btn = document.getElementById('floatingChatBadge');
+  if (!btn) return;
+  const dmsBadge = document.getElementById('fcDmsBadge');
+  if (dmsBadge) {
+    dmsBadge.style.display = dmTotal > 0 ? 'inline' : 'none';
+    dmsBadge.textContent = dmTotal;
+  }
+  if (total > 0) {
+    btn.classList.add('has-notif');
+    btn.textContent = total > 99 ? '99+' : total;
+  } else {
+    btn.classList.remove('has-notif');
+  }
+}
+
+// Update floating badge whenever DM unread changes
+setInterval(() => {
+  if (document.getElementById('gameModal')?.classList.contains('show')) {
+    fcUpdateBadges();
+  }
+}, 2000);
 </script>
 </body>
 </html>
