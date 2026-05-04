@@ -1770,18 +1770,16 @@ body.light-mode .link-card {
 <script>
 // ── Load classification from GitHub ──
 let _classification = {};
-const COVER_BASE = 'https://raw.githubusercontent.com/gn-math/covers/main';
+const COVER_BASE = 'https://cdn.statically.io/gh/gn-math/covers/main';
 const HTML_BASE  = 'https://gn-math.github.io/html';
 
-fetch('classification.json')
-  .then(r => r.json())
-  .then(data => {
-    _classification = data;
-    return fetch('json.json');
-  })
-  .then(r => r.json())
-  .then(data => {
-    window._jsonGames = data.map(g => ({
+Promise.all([
+  fetch('classification.json').then(r => r.json()),
+  fetch('json.json').then(r => r.json())
+])
+  .then(([classData, jsonData]) => {
+    _classification = classData;
+    window._jsonGames = jsonData.map(g => ({
       name:  g.name,
       url:   g.url.replace('{HTML_URL}', HTML_BASE),
       thumb: (g.cover || '').replace('{COVER_URL}', COVER_BASE),
@@ -1954,12 +1952,8 @@ function renderAll() {
   const _cg = document.getElementById("countGames");
   if (_cg) _cg.textContent = allGames.length;
   renderHistory();
-  // Preload ratings for all games
-  if (window._fbDb && window._fbFns) {
-    allGames.forEach(g => {
-      if (!_ratingsCache[g.name]) loadGameRating(g.name);
-    });
-  }
+  // Las ratings se cargan solo cuando se abre un juego (launchGame),
+  // no en bulk al inicio — evita 758 llamadas Firebase simultáneas.
 }
 
   function getLinkImage(name) {
@@ -1976,10 +1970,9 @@ function renderAll() {
     return defaultLinkImg;
   }
 
-  function getGameEmoji(name) {
-    const n = name.toLowerCase().trim();
-    const defaultImg = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400&auto=format&fit=crop';
-    const gameImages = {
+  // ── Imagen por defecto y mapa de juegos (hoisted: se computa UNA sola vez) ──
+  const _defaultGameImg = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400&auto=format&fit=crop';
+  const _gameImages = {
       'casino':'https://estaticos-cdn.prensaiberica.es/clip/cbbb463a-ccfe-4b66-84f6-d37c06bf3802_16-9-discover-aspect-ratio_default_0.jpg',
       '2048':'https://plays.org/wp-content/uploads/2048-game-300x300.png?x77479',
       'agar.io':'https://upload.wikimedia.org/wikipedia/commons/d/d7/Agar.io_Logo.png',
@@ -2005,7 +1998,7 @@ function renderAll() {
       'five nights at epstein':'https://cdn.slowdownwiseup.co.uk/media/original_images/WEB_EpsteinGame_6_4ab02b4a65bf26d02e6c84e55bc75b5fcca27eba.jpg',
       'fnaf 3':'https://m.media-amazon.com/images/I/81paxGYlcqL.png',
       'fnaf 2':'https://play-lh.googleusercontent.com/GYcyLlHWoZumcal0WmDJJo2rCFyl3Y0mwXm0zaD-C9gC0PJGQMhzOKHfDUVlqSDlag=w240-h480-rw',
-      'fnaf':'https://play-lh.googleusercontent.com/myJ2kwywsCRglKkZuHBq6Aku9PX7HB75v-8KbnTK9JOPU6z0hpD9xtvjiTGqrn-e4eI',
+      'fnaf':'https://play-lh.googleusercontent.com/myJ2kwywsCRglKkZuHBq6Aku9PX7HB75v6-8KbnTK9JOPU6z0hpD9xtvjiTGqrn-e4eI',
       'geometry dash 3d':'https://gd-browser.com/wp-content/uploads/2025/10/geometry-dash-3d.png',
       'geometry dash':'https://static.wikia.nocookie.net/b213ondiscord/images/a/a6/Geometrydash.png/revision/latest?cb=20200721125515',
       'granny':'https://play-lh.googleusercontent.com/yT_LBq_tyKeIDohKDsqN_Qt18jGIPUYIxY2C-1-E2YA9Qd60uZW08pua17qBmIiDPA',
@@ -2033,69 +2026,152 @@ function renderAll() {
       'trafic rally':'https://azgames.io/upload/imgs/trafficrally.png',
       'ultrakill':'https://upload.wikimedia.org/wikipedia/en/thumb/4/48/Ultrakill_cover.png/250px-Ultrakill_cover.png',
       'undertale':'https://image.api.playstation.com/cdn/EP3746/CUSA09415_00/iOZJVz9HyD3V5UBwKA0HJg14znS8jRXa.png'
-    };
-    if (gameImages[n] !== undefined && gameImages[n] !== '') return gameImages[n];
-    const keysSorted = Object.keys(gameImages).sort((a, b) => b.length - a.length);
-    for (let key of keysSorted) {
-      if (n.includes(key) && gameImages[key] !== '') return gameImages[key];
+  };
+  // Pre-sort una sola vez por longitud descendente (para que "bob the robber 2" matchee antes que "bob the robber")
+  const _gameImageKeysSorted = Object.keys(_gameImages).sort((a, b) => b.length - a.length);
+
+  function getGameEmoji(name) {
+    const n = name.toLowerCase().trim();
+    if (_gameImages[n] !== undefined && _gameImages[n] !== '') return _gameImages[n];
+    for (let key of _gameImageKeysSorted) {
+      if (n.includes(key) && _gameImages[key] !== '') return _gameImages[key];
     }
-    return defaultImg;
+    return _defaultGameImg;
+  }
+  // ── Lazy-load state ──
+  let _lazyFiltered = [];
+  let _lazyRendered = 0;
+  let _lazyObserver = null;
+  let _imgObserver = null;
+  let _renderDebounce = null;
+  const LAZY_BATCH = 120; // más cards por batch = menos saltos
+
+  function _buildCard(g, lazy = true) {
+    const imageUrl = getGameEmoji(g.name);
+    const isFav = window._favGames && window._favGames.has(g.name);
+    const r = _ratingsCache[g.name];
+    const stars = (r && r.count > 0)
+      ? `<div style="display:flex;align-items:center;gap:3px;margin-top:3px">${[1,2,3,4,5].map(i=>`<span style="font-size:0.65rem;color:${i<=Math.round(r.avg)?'#fbbf24':'rgba(255,255,255,0.2)'}">★</span>`).join('')}<span style="font-family:'Be Vietnam Pro',sans-serif;font-size:0.55rem;color:var(--text-3);margin-left:2px">${r.avg.toFixed(1)}</span></div>`
+      : '';
+    const div = document.createElement('div');
+    div.className = 'link-card';
+    div.onclick = () => launchGame(g.name, g.url);
+    // Imagen: usa data-src / data-bg para lazy real — tanto <img> como bg div van al observer
+    const thumbHtml = g.thumb
+      ? `<img class="link-card-thumb${lazy ? ' lazy-img' : ''}" ${lazy ? `data-src="${escHtml(g.thumb)}" data-bg="${imageUrl}"` : `src="${escHtml(g.thumb)}"`} ${lazy ? '' : `onerror="this.style.display='none';this.nextElementSibling.style.display='block';this.nextElementSibling.style.backgroundImage='url(${imageUrl})'"` } alt="" style="background:var(--surface-2)">
+         <div class="link-card-thumb-placeholder" style="display:none"></div>`
+      : `<div class="link-card-thumb-placeholder${lazy ? ' lazy-bg' : ''}" ${lazy ? `data-bg="${imageUrl}"` : `style="background-image:url('${imageUrl}')"`}></div>`;
+
+    div.innerHTML = `
+      <div class="link-card-glow"></div>
+      ${thumbHtml}
+      <button class="link-card-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFav('${escHtml(g.name)}','${escHtml(g.url)}','${escHtml(g.thumb||'')}')">♥</button>
+      <div class="link-card-footer">
+        <div class="link-card-name">${escHtml(g.name)}</div>
+        ${stars}
+      </div>
+      ${g.key ? `<button class="link-card-remove" onclick="event.stopPropagation();removeGame('html','${g.key}')">✕</button>` : ''}`;
+    return div;
   }
 
-  function renderHtmlGames() {
+  function _initImgObserver() {
+    if (_imgObserver) _imgObserver.disconnect();
+    _imgObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        if (el.classList.contains('lazy-img')) {
+          el.src = el.dataset.src;
+          el.onerror = () => {
+            el.style.display = 'none';
+            const next = el.nextElementSibling;
+            if (next) { next.style.display = 'block'; next.style.backgroundImage = `url(${el.dataset.bg})`; }
+          };
+        } else if (el.classList.contains('lazy-bg')) {
+          el.style.backgroundImage = `url(${el.dataset.bg})`;
+        }
+        _imgObserver.unobserve(el);
+      });
+    }, { rootMargin: '1800px 0px' }); // preload 2 pantallas por adelantado
+  }
+
+  function _appendBatch(grid) {
+    const isFirst = _lazyRendered === 0;
+    const slice = _lazyFiltered.slice(_lazyRendered, _lazyRendered + LAZY_BATCH);
+    slice.forEach(g => {
+      const card = _buildCard(g, !isFirst);
+      grid.appendChild(card);
+      if (!isFirst) {
+        // observar tanto img como backgrounds: ambos cargan cuando se acercan
+        card.querySelectorAll('.lazy-bg, .lazy-img').forEach(el => _imgObserver.observe(el));
+      }
+    });
+    _lazyRendered += slice.length;
+  }
+
+    function renderHtmlGames() {
+    clearTimeout(_renderDebounce);
+    _renderDebounce = setTimeout(_doRenderHtmlGames, 80);
+  }
+  function _doRenderHtmlGames() {
     const q = document.getElementById("searchHtml").value.toLowerCase();
     const cat = window._activeCategory || 'all';
 
-    // Merge Firebase games + json.json games (deduplicate by name)
     const firebaseGames = window._games.html || [];
     const jsonGames = window._jsonGames || [];
     const firebaseNames = new Set(firebaseGames.map(g => g.name.toLowerCase()));
     const mergedGames = [...firebaseGames, ...jsonGames.filter(g => !firebaseNames.has(g.name.toLowerCase()))];
 
-  const filtered = mergedGames.filter(g => {
-    if (!g.name.toLowerCase().includes(q)) return false;
-    if (cat === 'all') return true;
-    const gameCategory = g.category || getCategory(g.name);
-    return gameCategory === cat;
-  });
-
+    const filtered = mergedGames.filter(g => {
+      if (!g.name.toLowerCase().includes(q)) return false;
+      if (cat === 'all') return true;
+      return (g.category || getCategory(g.name)) === cat;
+    });
     filtered.sort((a, b) => a.name.localeCompare(b.name));
     filtered.sort((a, b) => {
       if (a.name.toLowerCase() === 'casino') return -1;
       if (b.name.toLowerCase() === 'casino') return 1;
       return 0;
     });
+
     const container = document.getElementById("htmlList");
+    if (_lazyObserver) _lazyObserver.disconnect();
+    _initImgObserver();
+    
     if (filtered.length === 0) {
       container.innerHTML = `<div style="padding:60px 0;text-align:center;color:var(--text-3);font-family:'Be Vietnam Pro',sans-serif;font-size:0.875rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:12px"><span class="material-symbols-outlined" style="font-size:2.5rem;opacity:0.3">search_off</span>No games found</div>`;
-    } else {
-      container.innerHTML = `<div class="links-grid">${filtered.map(g => {
-        const imageUrl = getGameEmoji(g.name);
-        const thumb = g.thumb
-          ? `<img class="link-card-thumb" src="${escHtml(g.thumb)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" alt="">
-             <div class="link-card-thumb-placeholder" style="display:none;background-image:url('${imageUrl}')"></div>`
-          : `<div class="link-card-thumb-placeholder" style="background-image:url('${imageUrl}')"></div>`;
-        const isFav = window._favGames && window._favGames.has(g.name);
-        return `<div class="link-card" onclick="launchGame('${escHtml(g.name)}','${escHtml(g.url)}')">
-          <div class="link-card-glow"></div>
-          ${thumb}
-          <button class="link-card-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation();toggleFav('${escHtml(g.name)}','${escHtml(g.url)}','${escHtml(g.thumb||'')}')">♥</button>
-          <div class="link-card-footer">
-            <div class="link-card-name">${escHtml(g.name)}</div>
-            ${(() => {
-              const r = _ratingsCache[g.name];
-              if (!r || r.count === 0) return '';
-              const stars = [1,2,3,4,5].map(i => `<span style="font-size:0.65rem;color:${i<=Math.round(r.avg)?'#fbbf24':'rgba(255,255,255,0.2)'}">★</span>`).join('');
-              return `<div style="display:flex;align-items:center;gap:3px;margin-top:3px">${stars}<span style="font-family:'Be Vietnam Pro',sans-serif;font-size:0.55rem;color:var(--text-3);margin-left:2px">${r.avg.toFixed(1)}</span></div>`;
-            })()}
-          </div>
-          ${g.key ? `<button class="link-card-remove" onclick="event.stopPropagation();removeGame('html','${g.key}')">✕</button>` : ''}
-        </div>`;
-      }).join('')}</div>`;
+      document.getElementById("countHtmlVisible").textContent = q ? `0 / ${mergedGames.length}` : `${mergedGames.length} Games`;
+      return;
     }
+
+    _lazyFiltered = filtered;
+    _lazyRendered = 0;
+    container.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'links-grid';
+    container.appendChild(grid);
+    const sentinel = document.createElement('div');
+    sentinel.style.height = '1px';
+    container.appendChild(sentinel);
+
+    _appendBatch(grid);
+
+    _lazyObserver = new IntersectionObserver(entries => {
+      if (!entries[0].isIntersecting || _lazyRendered >= _lazyFiltered.length) return;
+      const renderLoop = () => {
+        if (_lazyRendered >= _lazyFiltered.length) return;
+        _appendBatch(grid);
+        requestAnimationFrame(() => {
+          const rect = sentinel.getBoundingClientRect();
+          if (rect.top <= window.innerHeight + 1200) renderLoop();
+        });
+      };
+      renderLoop();
+    }, { rootMargin: '1200px 0px' }); // activa mucho antes de llegar al final
+    _lazyObserver.observe(sentinel);
+
     document.getElementById("countHtmlVisible").textContent = q ? `${filtered.length} / ${mergedGames.length}` : `${mergedGames.length} Games`;
   }
-
   // ── FAVOURITES ──
   window._favGames = new Set(JSON.parse(localStorage.getItem('_favGames') || '[]'));
   window._favData  = JSON.parse(localStorage.getItem('_favData')  || '{}');
@@ -2168,10 +2244,10 @@ async function submitRating(value) {
   const { ref, set } = window._fbFns;
   await set(ref(window._fbDb, 'ratings/' + safeKey + '/' + u.uid), value);
   showToast('⭐ Rating saved!');
-  loadGameRating(_currentRatingGame);
+  loadGameRating(_currentRatingGame, true); // refresca las cartas solo tras votar
 }
 
-function loadGameRating(gameName) {
+function loadGameRating(gameName, refreshGrid = false) {
   if (!window._fbDb) return;
   const safeKey = gameName.replace(/[^a-zA-Z0-9]/g, '_');
   const { ref, onValue } = window._fbFns;
@@ -2183,7 +2259,7 @@ function loadGameRating(gameName) {
     const mine = u ? (data[u.uid] || 0) : 0;
     _ratingsCache[gameName] = { avg, count: values.length, mine };
     updateTopbarStars(gameName, avg, values.length);
-    renderHtmlGames(); // refresh cards
+    if (refreshGrid) renderHtmlGames(); // solo refresca si se pide explícitamente
   }, { onlyOnce: true });
 }
 
@@ -3420,9 +3496,9 @@ if (aiMention) {
     const url  = document.getElementById("addUrl").value.trim();
     const thumb = document.getElementById("addThumb")?.value.trim() || '';
     if (!name || !url) { showToast("⚠ Please fill in all fields"); return; }
-    const gameData = { name, url };
+    const gameData = { name, url, category };
     if (thumb) gameData.thumb = thumb;
-    push(ref(db, 'games/' + (type === 'html' ? 'html' : 'links')), gameData);
+    push(ref(db, 'games/html'), gameData);
     document.getElementById("addName").value = "";
     document.getElementById("addUrl").value = "";
     if (document.getElementById("addThumb")) document.getElementById("addThumb").value = "";
